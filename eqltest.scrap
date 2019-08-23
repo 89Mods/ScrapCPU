@@ -1,0 +1,40 @@
+MAIN
+	LOADi		1
+	STOREA		1
+	LOADi		2
+	STOREA		2
+	LOADi		3
+	STOREA		4
+	LOADi		6
+	STOREA		3
+	LOADi		19
+	qEQL		3
+	JMPA		PASS1
+	JMP			HALT
+	
+PASS1
+	LOADi		0
+	qADD		1
+	OUT
+	LOADi		2
+	qEQL		3
+	JMPA		PASS2
+	JMP			HALT
+	
+PASS2
+	LOADi		0
+	qADD		2
+	OUT
+	LOADi		6
+	qEQL		3
+	JMPB		PASS3
+	JMP			HALT
+	
+PASS3
+	LOADi		0
+	qADD		4
+	OUT
+	JMP			HALT
+	
+HALT
+	JMP			HALT

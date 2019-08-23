@@ -1,0 +1,31 @@
+SYMBOL		X		2
+SYMBOL		Y		3
+SYMBOL		Z		4
+SYMBOL		TEMP	5
+MAIN							# Set up variables
+	LOADi		5
+	STOREA		X
+	LOADi		6
+	STOREA		Y
+	LOADi		0
+	STOREA		TEMP
+	STOREA		Z
+	JMP			MUL_LOOP
+	
+MUL_LOOP						# Do the actual Multiplication
+	LOAD		X
+	qADD		Z
+	STORE
+	LOADi		1
+	ADD			TEMP
+	STORE
+	qEQL		Y
+	JNZ			HALT
+	JMP			MUL_LOOP
+	
+HALT							# Output result and halt
+	LOADi		0
+	qADD		Z
+	OUT
+	NOP
+	JMP			HALT

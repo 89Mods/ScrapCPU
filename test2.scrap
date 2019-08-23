@@ -1,0 +1,10 @@
+MAIN
+	LOADi		1
+	LOADm		63
+	STOREA
+	
+LOOP
+	ADD
+	STORE
+	JZ			MAIN
+	JMP			LOOP

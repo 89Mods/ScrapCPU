@@ -1,0 +1,12 @@
+MAIN
+	LOADi		0
+	STOREA		0
+	
+LOOP
+	LOAD
+	STOREA		63
+	LOADi		1
+	qADD		0
+	STORE
+	LOADm
+	JMP			LOOP
