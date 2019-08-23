@@ -1,3 +1,5 @@
+//Multiplies two 12-bit numbers, each of which is represented as two 6-bit words
+
 SYMBOL		X_l		1
 SYMBOL		X_h		2
 SYMBOL		Y		3

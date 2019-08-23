@@ -1,3 +1,5 @@
+//Divides one number by another and displays the result
+
 SYMBOL		X		2
 SYMBOL		Y		3
 SYMBOL		Z		4

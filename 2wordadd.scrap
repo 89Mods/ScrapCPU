@@ -1,3 +1,5 @@
+//Adds two 12-bit numbers, each of which is represented as two 6-bit words
+
 SYMBOL		X_1		0
 SYMBOL		X_2		1
 

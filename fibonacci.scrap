@@ -1,3 +1,5 @@
+//Calculates fibonacci numbers
+
 SYMBOL		B		0
 MAIN
 	LOADi	1

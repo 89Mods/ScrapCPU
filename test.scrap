@@ -1,3 +1,5 @@
+//Adds two numbers
+
 SYMBOL		TEMP	0
 MAIN					# Entry Point
     LOADi   7
