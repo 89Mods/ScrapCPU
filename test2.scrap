@@ -1,5 +1,3 @@
-//Computes and displays powers of two. Simplest possible test program.
-
 MAIN
 	LOADi		1
 	LOADm		63

@@ -8,13 +8,14 @@ public class Simulator {
 	public int B;
 	public int M;
 	public int PC;
+	public int P;
 	public int ins;
 	public int STEP;
 	public boolean carry;
 	public boolean zero;
 	
 	public int[] RAM = new int[64];
-	public int[] ROM = new int[64];
+	public int[] ROM = new int[512];
 	
 	public boolean mode = false;
 	public boolean qMode = false;
@@ -24,7 +25,7 @@ public class Simulator {
 	}
 	
 	public void reset(boolean keepRom) {
-		A = B = M = PC = ins = STEP = 0;
+		A = B = M = PC = ins = STEP = P = 0;
 		carry = false;
 		zero = true;
 		Arrays.fill(RAM, 0);
@@ -34,7 +35,7 @@ public class Simulator {
 	}
 	
 	public void step() {
-		PC &= 0b00111111;
+		PC &= 0b111111111;
 		if(STEP == 0) {
 			//Nothing
 			STEP++;
@@ -51,6 +52,17 @@ public class Simulator {
 		}
 		if(ins == 0x3F) {
 			if(STEP == 2) A = ROM[PC];
+			if(STEP == 3) {
+				STEP = 1;
+				PC++;
+				return;
+			}
+			STEP++;
+			return;
+		}
+		if((ins & 0b00011111) == 0b010000) {
+			if(!mode && STEP == 2) P = ROM[PC] & 0b111;
+			if(mode && STEP == 2) P = RAM[M] & 0b111;
 			if(STEP == 3) {
 				STEP = 1;
 				PC++;
@@ -122,6 +134,16 @@ public class Simulator {
 				return;
 			}
 			break;
+		case 0x07: //SUBc
+			if(!mode && STEP == 2) M = ROM[PC];
+			if(STEP == 3) ALUstep(0b111, RAM[M]);
+			if(!qMode && STEP == 4) A = B;
+			if(STEP == 5) {
+				STEP = 1;
+				PC++;
+				return;
+			}
+			break;
 		case 0x08: //EQL
 			if(!mode && STEP == 2) M = ROM[PC];
 			if(STEP == 3) ALUstep(0b010, RAM[M]);
@@ -143,16 +165,16 @@ public class Simulator {
 			}
 			break;
 		case 0x0C: //JMP
-			if(!mode && STEP == 2) PC = ROM[PC];
-			if(mode && STEP == 2) PC = RAM[M];
+			if(!mode && STEP == 2) PC = ROM[PC] + (P << 6);
+			if(mode && STEP == 2) PC = RAM[M] + (P << 6);
 			if(STEP == 3) {
 				STEP = 1;
 				return;
 			}
 			break;
 		case 0x0D: //JZ
-			if(!mode && STEP == 2 && zero) PC = ROM[PC];
-			if(mode && STEP == 2 && zero) PC = RAM[M];
+			if(!mode && STEP == 2 && zero) PC = ROM[PC] + (P << 6);
+			if(mode && STEP == 2 && zero) PC = RAM[M] + (P << 6);
 			if(STEP == 3 && zero) {
 				STEP = 1;
 				return;
@@ -169,8 +191,8 @@ public class Simulator {
 				PC++;
 				return;
 			}
-			if(!mode && STEP == 2 && !zero) PC = ROM[PC];
-			if(mode && STEP == 2 && !zero) PC = RAM[M];
+			if(!mode && STEP == 2 && !zero) PC = ROM[PC] + (P << 6);
+			if(mode && STEP == 2 && !zero) PC = RAM[M] + (P << 6);
 			if(STEP == 3 && !zero) {
 				STEP = 1;
 				return;
@@ -197,13 +219,16 @@ public class Simulator {
 			B = A + busval + (carry ? 1 : 0);
 		}
 		if(alusel == 0b011) {
-			B = A - busval;
+			B = A + (~busval & 0b00111111) + 1;
 		}
 		if(alusel == 0b010) {
 			B = A == busval ? 1 : 0;
 		}
 		if(alusel == 0b000) {
 			B = A > busval ? 1 : 0;
+		}
+		if(alusel == 0b111) {
+			B = A + (~busval & 0b00111111) + (carry ? 1 : 0);
 		}
 		
 		carry = B > 0b00111111;

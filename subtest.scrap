@@ -1,5 +1,3 @@
-//Tests the SUB instruction
-
 MAIN
 	LOADi		39
 	STOREA		22

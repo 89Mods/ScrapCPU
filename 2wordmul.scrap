@@ -1,45 +1,68 @@
-//Multiplies two 12-bit numbers, each of which is represented as two 6-bit words
-
-SYMBOL		X_l		1
-SYMBOL		X_h		2
-SYMBOL		Y		3
-SYMBOL		Z_l		4
-SYMBOL		Z_h		5
-SYMBOL		TEMP	6
+SYMBOL		X_hi	2
+SYMBOL		X_lo	3
+SYMBOL		Y_hi	4
+SYMBOL		Y_lo	5
+SYMBOL		Z_hi	6
+SYMBOL		Z_lo	7
+SYMBOL		TEMP_hi	8
+SYMBOL		TEMP_lo	9
 MAIN							# Set up variables
-	LOADi		0b000010
-	STOREA		X_h
-	LOADi		0b100101		# X = 165
-	STOREA		X_l
-	LOADi		7				# Y = 7
-	STOREA		Y
+	LOADi		38
+	STOREA		X_lo
+	LOADi		1
+	STOREA		X_hi
+	LOADi		14
+	STOREA		Y_lo
+	LOADi		1
+	STOREA		Y_hi
+	
 	LOADi		0
-	STOREA		TEMP
-	STOREA		Z_l
-	STOREA		Z_h
-	JMP			MUL_LOOP		# Calculate Z = X * Y
+	STOREA		TEMP_hi
+	STORE		TEMP_lo
+	STORE		Z_hi
+	STORE		Z_lo
+	JMP			MUL_LOOP
 	
 MUL_LOOP						# Do the actual Multiplication
-	LOAD		Z_l
-	qADD		X_l
-	STORE		Z_l
-	LOAD		Z_h
-	qADDc		X_h
-	STORE		Z_h
+	LOAD		X_lo
+	qADD		Z_lo
+	STORE
+	LOAD		X_hi
+	qADDc		Z_hi
+	STORE
+	
 	LOADi		1
-	ADD			TEMP
-	STORE		TEMP
-	qEQL		Y
-	JMPB		HALT
+	qADD		TEMP_lo
+	STORE
+	LOADi		0
+	qADDc		TEMP_hi
+	STORE
+	
+	LOAD		TEMP_lo
+	qEQL		Y_lo
+	JNZ			MUL_CHECK_EQL
+	JMP			MUL_LOOP
+	
+MUL_CHECK_EQL
+	LOAD		TEMP_hi
+	qEQL		Y_hi
+	JNZ			HALT
 	JMP			MUL_LOOP
 	
 HALT							# Output result and halt
 	LOADi		0
-	qADD		Z_l
+	qADD		Z_lo
 	OUT
 	NOP
-	qADD		Z_h
+	NOP
+	NOP
+	NOP
+	NOP
+	qADD		Z_hi
 	OUT
+	NOP
+	NOP
+	NOP
 	NOP
 	NOP
 	JMP			HALT

@@ -1,0 +1,43 @@
+SYMBOL		X_l		1
+SYMBOL		X_h		2
+SYMBOL		Y		3
+SYMBOL		Z_l		4
+SYMBOL		Z_h		5
+SYMBOL		TEMP	6
+MAIN							# Set up variables
+	LOADi		0b000010
+	STOREA		X_h
+	LOADi		0b100101		# X = 165
+	STOREA		X_l
+	LOADi		7				# Y = 7
+	STOREA		Y
+	LOADi		0
+	STOREA		TEMP
+	STOREA		Z_l
+	STOREA		Z_h
+	JMP			MUL_LOOP		# Calculate Z = X * Y
+	
+MUL_LOOP						# Do the actual Multiplication
+	LOAD		Z_l
+	qADD		X_l
+	STORE		Z_l
+	LOAD		Z_h
+	qADDc		X_h
+	STORE		Z_h
+	LOADi		1
+	ADD			TEMP
+	STORE		TEMP
+	qEQL		Y
+	JMPB		HALT
+	JMP			MUL_LOOP
+	
+HALT							# Output result and halt
+	LOADi		0
+	qADD		Z_l
+	OUT
+	NOP
+	qADD		Z_h
+	OUT
+	NOP
+	NOP
+	JMP			HALT

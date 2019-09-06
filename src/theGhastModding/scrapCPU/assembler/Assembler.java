@@ -32,6 +32,7 @@ public class Assembler {
 		opcodes.add(new Instruction("JZ", 0x0D, true, true));
 		opcodes.add(new Instruction("JNZ", 0x0E, true, true));
 		opcodes.add(new Instruction("LOADm", 0x0F, true, true));
+		opcodes.add(new Instruction("LOADp", 0b010000, true, true));
 		opcodes.add(new Instruction("LOADi", 0x3F, true, false));
 		
 		opcodes.add(new Instruction("qADD", 0x04 | (1 << 4), true, true));
@@ -98,8 +99,51 @@ public class Assembler {
 		return false;
 	}
 	
+	private static boolean isNumber(String s) {
+		String s2 = s;
+		if(s.startsWith("0b")) {
+			s2 = s.substring(2);
+			for(char c:s2.toCharArray()) {
+				if(c != '0' && c != '1') return false;
+			}
+			return true;
+		}
+		if(s.startsWith("0x")) {
+			s2 = s.substring(2);
+			for(char c:s2.toCharArray()) {
+				if(c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9' && c != 'A' && c != 'B' && c != 'C' && c != 'D' && c != 'E' && c != 'F' && c != 'a' && c != 'b' && c != 'c' && c != 'd' && c != 'e' && c != 'f') {
+					return false;
+				}
+			}
+			return true;
+		}
+		for(char c:s2.toCharArray()) {
+			if(c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9') {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	public static void main(String[] args) {
 		try {
+			
+			/*Random rng = new Random();
+			String brokenProgram = "";
+			for(int i = 0; i != 32; i++) {
+				Instruction ins = opcodes.get(rng.nextInt(opcodes.size()));
+				if(ins.name.contains("RSH") || ins.name.contains("LSH") || ins.name.equals("JMP") || ins.name.contains("SUBc") || ins.name.equals("JZ") || ins.name.equals("JNZ")) {
+					i--;
+					continue;
+				}
+				brokenProgram += ins.name;
+				if(rng.nextBoolean() || ins.opcode == 0x3F) {
+					brokenProgram += "\t\t" + Integer.toString(rng.nextInt(64));
+				}
+				brokenProgram += "\n";
+			}
+			System.out.println(brokenProgram);*/
+			
 			BufferedReader br = new BufferedReader(new FileReader(new File(args[0])));
 			List<String> lines = new ArrayList<String>();
 			while(true) {
@@ -112,7 +156,8 @@ public class Assembler {
 			for(int i = 0; i < lines.size(); i++) {
 				if(lines.get(i).contains("#")) {
 					int loc = lines.get(i).indexOf('#');
-					lines.set(i, lines.get(i).substring(0, loc - 1));
+					if(loc == 0) lines.set(i, "");
+					else lines.set(i, lines.get(i).substring(0, loc - 1));
 				}
 			}
 			
@@ -246,7 +291,22 @@ public class Assembler {
 					System.exit(1);
 				}
 				instructionAddr[i] = addrCntr;
-				if(ins.hasArgument) {
+				if(ins.name.equals("JMP") || ins.name.equals("JZ") || ins.name.equals("JNZ")) {
+					String[] instr_args = line.split("[ \t]");
+					int indx = getNextArgument(instr_args, 0);
+					if(indx == -1) {
+						addrCntr++;
+					}
+					else if(isNumber(instr_args[indx])) {
+						addrCntr+=2;
+					}else {
+						addrCntr += 4;
+					}
+				}
+				else if(ins.name.equals("NOP")) {
+					addrCntr += 2;
+				}
+				else if(ins.hasArgument) {
 					String[] instr_args = line.split("[ \t]");
 					int indx = getNextArgument(instr_args, 0);
 					if(indx == -1 && !ins.hasIndirectMode) {
@@ -260,13 +320,16 @@ public class Assembler {
 			}
 			for(Label l:labels) {
 				l.startAddr = instructionAddr[l.startAddr];
+				symbols.put(l.name + "_hi", Integer.toString((l.startAddr >>> 6) & 0b111));
+				symbols.put(l.name + "_lo", Integer.toString(l.startAddr & 0b00111111));
 			}
 			
+			int indx;
 			for(int i = 0; i < unwrapped.size(); i++) {
 				String line = unwrapped.get(i);
 				
 				String[] instr_args = line.split("[ \t]");
-				int indx = getNextArgument(instr_args, 0);
+				indx = getNextArgument(instr_args, 0);
 				if(indx != -1) {
 					for(String s:symbols.keySet()) {
 						if(instr_args[indx].equals(s)) {
@@ -282,8 +345,10 @@ public class Assembler {
 					//It's a jump instruction. Let's resolve its label into an actual ROM address.
 					String[] jmp_args = line.split("[ \t]");
 					if(jmp_args.length < 2) {
-						System.err.println(String.format("Error on line %d: Missing argument for instruction.", unwrappedSources.get(i)));
-						System.exit(1);
+						//System.err.println(String.format("Error on line %d: Missing argument for instruction.", unwrappedSources.get(i)));
+						//System.exit(1);
+						//Is indirect
+						continue;
 					}
 					indx = getNextArgument(jmp_args, 0);
 					if(indx == -1) {
@@ -306,8 +371,13 @@ public class Assembler {
 						System.err.println("Invalid label name: " + labelName + "!");
 						System.exit(1);
 					}
-					line = line.replace(labelName, Integer.toString(label.startAddr));
+					int addr = label.startAddr;
+					String pCmd = "LOADp " + Integer.toString((addr >>> 6) & 0b111);
+					addr &= 0b00111111;
+					line = line.replace(labelName, Integer.toString(addr));
 					unwrapped.set(i, line);
+					unwrapped.add(i, pCmd);
+					i++;
 				}
 			}
 			
@@ -338,7 +408,7 @@ public class Assembler {
 				bytecodeSize++;
 				if(ins.hasArgument) {
 					String[] instr_args = line.split("[ \t]");
-					int indx = getNextArgument(instr_args, 0);
+					indx = getNextArgument(instr_args, 0);
 					if(indx == -1 && !ins.hasIndirectMode) {
 						System.err.println(String.format("Error on line %d: Missing Argument!", unwrappedSources.get(i)));
 						System.exit(1);
@@ -365,7 +435,7 @@ public class Assembler {
 						if(argnum > 63) {
 							System.err.println(String.format("Warning on line %d: Value overflow!", unwrappedSources.get(i)));
 						}
-						bytecode[bytecodeSize] = (byte)argnum;
+						bytecode[bytecodeSize] = (byte)(argnum & 0b00111111);
 						bytecodeSize++;
 					}
 				}else if(ins.name.equals("NOP")) {
@@ -382,7 +452,7 @@ public class Assembler {
 			}
 			
 			FileOutputStream fos = new FileOutputStream(args[0] + ".bin");
-			fos.write(bytecode);
+			fos.write(bytecode, 0, bytecodeSize);
 			fos.close();
 			
 		}catch(Exception e) {

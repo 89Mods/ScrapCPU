@@ -1,5 +1,3 @@
-//Iterates through all of RAM and displays its contents on the Output Display
-
 MAIN
 	LOADi		0
 	STOREA		0

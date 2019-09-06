@@ -1,14 +1,12 @@
-//Divides one number by another and displays the result
-
 SYMBOL		X		2
 SYMBOL		Y		3
 SYMBOL		Z		4
 SYMBOL		TEMP	5
 MAIN
-	LOADi		57
+	LOADi		52	// 57 9
 	STOREA		X
 	STOREA		TEMP
-	LOADi		9
+	LOADi		3
 	STOREA		Y
 	LOADi		0
 	STOREA		Z

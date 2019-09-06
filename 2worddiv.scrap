@@ -1,0 +1,92 @@
+SYMBOL		X_hi	2
+SYMBOL		X_lo	3
+SYMBOL		Y_hi	4
+SYMBOL		Y_lo	5
+SYMBOL		Z_hi	6
+SYMBOL		Z_lo	7
+SYMBOL		TEMP_hi	8
+SYMBOL		TEMP_lo	9
+MAIN
+	LOADi		52
+	STOREA		X_hi
+	STORE		TEMP_hi
+	LOADi		12
+	STOREA		X_lo
+	STORE		TEMP_lo
+	LOADi		3
+	STOREA		Y_hi
+	LOADi		55
+	STOREA		Y_lo
+	LOADi		0
+	STOREA		Z_hi
+	STORE		Z_lo
+	
+DIV_LOOP
+	LOAD		TEMP_hi
+	qEQL		Y_hi
+	JNZ			DIV_CHECK_LOW_WORD
+	qMAG		Y_hi
+	JMP			DIV_CHECK_HIGH_WORD
+DIV_CHECK_LOW_WORD
+	LOAD		TEMP_lo
+	qMAG		Y_lo
+DIV_CHECK_HIGH_WORD
+	JZ			DIV_MAG
+	LOAD		TEMP_lo
+	qSUB		Y_lo
+	STORE		TEMP_lo
+	LOAD		TEMP_hi
+	qSUBc		Y_hi
+	STORE		TEMP_hi
+	
+	LOADi		1
+	qADD		Z_lo
+	STORE
+	LOADi		0
+	qADD		Z_hi
+	STORE
+	JMP			DIV_LOOP
+	
+DIV_MAG
+	LOAD		TEMP_lo
+	qEQL		Y_lo
+	STORE
+	LOAD		TEMP_hi
+	EQL			Y_hi
+	qADD		Y_lo
+	STORE
+	LOADi		2
+	qEQL		Y_lo
+	JNZ			DIV_EQL
+	LOADi		0
+	JMP			DIV_FINISH
+	
+DIV_EQL
+	LOADi		1
+	JMP			DIV_FINISH
+	
+DIV_FINISH
+	qADD		Z_lo
+	STORE
+	LOADi		0
+	qADDc		Z_hi
+	STORE
+	JMP			HALT
+	
+HALT
+	LOADi		0
+	qADD		Z_lo
+	OUT
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	qADD		Z_hi
+	OUT
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	JMP			HALT

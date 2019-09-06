@@ -1,5 +1,3 @@
-//Tests the MAG and qMAG instructions. The test is considered passed when the number 3 is displayed on the Output Display
-
 MAIN
 	LOADi		1
 	STOREA		1

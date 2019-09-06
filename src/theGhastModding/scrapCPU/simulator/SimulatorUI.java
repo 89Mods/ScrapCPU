@@ -41,12 +41,11 @@ public class SimulatorUI extends JPanel implements Runnable {
 	private byte[] RAM_mirror = new byte[64];
 	private ByteArrayEditableData dat = new ByteArrayEditableData(RAM_mirror);
 	
-	private byte[] ROM_mirror = new byte[64];
+	private byte[] ROM_mirror = new byte[512];
 	private ByteArrayEditableData dat2 = new ByteArrayEditableData(ROM_mirror);
 	
 	private BufferedImage registerImage = new BufferedImage(477, 28, BufferedImage.TYPE_INT_RGB);
 	private BufferedImage segmentDisplayImage = new BufferedImage(100, 45, BufferedImage.TYPE_INT_RGB);
-	private final double rDist = 477.0 / 6.0;
 	private Color lightColor = new Color(0, 255, 0);
 	private boolean running = false;
 	private boolean simulate = false;
@@ -59,18 +58,21 @@ public class SimulatorUI extends JPanel implements Runnable {
 	private JPanel panelB;
 	private JPanel panelM;
 	private JPanel panelPC;
+	private JPanel panelP;
 	
 	private JLabel lvalueDINSIN; private String DINSINtext = "Value (Decimal): ";
 	private JLabel lvalueDA; private String DAtext = "Value (Decimal): ";
 	private JLabel lvalueDB; private String DBtext = "Value (Decimal): ";
 	private JLabel lvalueDM; private String DMtext = "Value (Decimal): ";
 	private JLabel lvalueDPC; private String DPCtext = "Value (Decimal): ";
+	private JLabel lvalueDP; private String DPtext = "Value (Decimal): ";
 	
 	private JLabel lvalueHINSIN; private String HINSINtext = "Value (Hexadecimal): ";
 	private JLabel lvalueHA; private String HAtext = "Value (Hexadecimal): ";
 	private JLabel lvalueHB; private String HBtext = "Value (Hexadecimal): ";
 	private JLabel lvalueHM; private String HMtext = "Value (Hexadecimal): ";
 	private JLabel lvalueHPC; private String HPCtext = "Value (Hexadecimal): ";
+	private JLabel lvalueHP; private String HPtext = "Value (Hexadecimal): ";
 	
 	private JLabel lblflag; private String flagtext = "0-flag: ";
 	private JLabel lblCarryFlag; private String lblCarrytext = "Carry Flag: ";
@@ -106,7 +108,7 @@ public class SimulatorUI extends JPanel implements Runnable {
 		}
 		System.out.println(s2);
 		
-		setPreferredSize(new Dimension(1050, 625));
+		setPreferredSize(new Dimension(1050, 711));
 		setLayout(null);
 		
 		JButton btnStart = new JButton("Start");
@@ -162,7 +164,7 @@ public class SimulatorUI extends JPanel implements Runnable {
 		
 		JPanel panel = new JPanel();
 		panel.setBorder(new TitledBorder(null, "CPU Registers", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panel.setBounds(12, 80, 501, 533);
+		panel.setBounds(12, 80, 501, 609);
 		add(panel);
 		panel.setLayout(null);
 		
@@ -231,11 +233,11 @@ public class SimulatorUI extends JPanel implements Runnable {
 		panel.add(lblM);
 		
 		lblflag = new JLabel(flagtext);
-		lblflag.setBounds(12, 506, 115, 15);
+		lblflag.setBounds(12, 586, 115, 15);
 		panel.add(lblflag);
 		
 		lblCarryFlag = new JLabel(lblCarrytext);
-		lblCarryFlag.setBounds(139, 506, 188, 15);
+		lblCarryFlag.setBounds(139, 586, 188, 15);
 		panel.add(lblCarryFlag);
 		
 		lvalueHPC = new JLabel(HPCtext);
@@ -253,6 +255,22 @@ public class SimulatorUI extends JPanel implements Runnable {
 		JLabel lblPc = new JLabel("PC");
 		lblPc.setBounds(12, 22, 66, 15);
 		panel.add(lblPc);
+		
+		lvalueHP = new JLabel("Value (Hexadecimal): ");
+		lvalueHP.setBounds(174, 559, 182, 15);
+		panel.add(lvalueHP);
+		
+		lvalueDP = new JLabel("Value (Decimal): ");
+		lvalueDP.setBounds(12, 559, 205, 15);
+		panel.add(lvalueDP);
+		
+		panelP = new JPanel();
+		panelP.setBounds(12, 519, 477, 28);
+		panel.add(panelP);
+		
+		JLabel labelP = new JLabel("P");
+		labelP.setBounds(12, 492, 66, 15);
+		panel.add(labelP);
 		
 		JPanel panel_5 = new JPanel();
 		panel_5.setBorder(new TitledBorder(null, "Memory Contents", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -316,11 +334,11 @@ public class SimulatorUI extends JPanel implements Runnable {
 					simulator.reset(false);
 					Arrays.fill(simulator.ROM, 0);
 					FileInputStream fis = new FileInputStream(f);
-					for(int i = 0; i < 64; i++) {
+					for(int i = 0; i < 512; i++) {
 						if(fis.available() <= 0) break;
 						simulator.ROM[i] = (fis.read() & 0xFF) & 0b00111111;
 					}
-					for(int i = 0; i < 64; i++) ROM_mirror[i] = (byte)simulator.ROM[i];
+					for(int i = 0; i < 512; i++) ROM_mirror[i] = (byte)simulator.ROM[i];
 					txtpnB.notifyDataChanged();
 					fis.close();
 				} catch(Exception e) {
@@ -339,6 +357,19 @@ public class SimulatorUI extends JPanel implements Runnable {
 			}
 		});
 		fileMenu.add(exitItem);
+		
+		TypeConverter tc = new TypeConverter(this);
+		
+		JMenu toolsMenu = new JMenu("Tools");
+		menuBar.add(toolsMenu);
+		JMenuItem converterItem = new JMenuItem("Type Converter");
+		converterItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				tc.setVisible(true);
+			}
+		});
+		toolsMenu.add(converterItem);
 		
 		parrent.setJMenuBar(menuBar);
 		
@@ -367,21 +398,24 @@ public class SimulatorUI extends JPanel implements Runnable {
 				simulator.step();
 			}
 			
-			renderRegisterValue(simulator.PC, panelPC);
+			renderRegisterValue(simulator.PC, panelPC, 9);
 			lvalueDPC.setText(DPCtext + Integer.toString(simulator.PC));
 			lvalueHPC.setText(HPCtext + Integer.toHexString(simulator.PC));
-			renderRegisterValue(simulator.ins, panelINSIN);
+			renderRegisterValue(simulator.ins, panelINSIN, 6);
 			lvalueDINSIN.setText(DINSINtext + Integer.toString(simulator.ins));
 			lvalueHINSIN.setText(HINSINtext + Integer.toHexString(simulator.ins));
-			renderRegisterValue(simulator.A, panelA);
+			renderRegisterValue(simulator.A, panelA, 6);
 			lvalueDA.setText(DAtext + Integer.toString(simulator.A));
 			lvalueHA.setText(HAtext + Integer.toHexString(simulator.A));
-			renderRegisterValue(simulator.B, panelB);
+			renderRegisterValue(simulator.B, panelB, 6);
 			lvalueDB.setText(DBtext + Integer.toString(simulator.B));
 			lvalueHB.setText(HBtext + Integer.toHexString(simulator.B));
-			renderRegisterValue(simulator.M, panelM);
+			renderRegisterValue(simulator.M, panelM, 6);
 			lvalueDM.setText(DMtext + Integer.toString(simulator.M));
 			lvalueHM.setText(HMtext + Integer.toHexString(simulator.M));
+			renderRegisterValue(simulator.P, panelP, 3);
+			lvalueDP.setText(DPtext + Integer.toString(simulator.P));
+			lvalueHP.setText(HPtext + Integer.toHexString(simulator.P));
 			
 			lblflag.setText(flagtext + (simulator.zero ? "1" : "0"));
 			lblCarryFlag.setText(lblCarrytext + (simulator.carry ? "1" : "0"));
@@ -401,14 +435,15 @@ public class SimulatorUI extends JPanel implements Runnable {
 		
 	}
 	
-	private void renderRegisterValue(int val, JPanel panel) {
+	private void renderRegisterValue(int val, JPanel panel, int bits) {
 		Graphics g2 = panel.getGraphics();
 		if(g2 == null) return;
 		Graphics2D g = (Graphics2D)registerImage.getGraphics();
 		g.setColor(panel.getBackground());
 		g.fillRect(0, 0, registerImage.getWidth(), registerImage.getHeight());
-		for(int i = 0; i < 6; i++) {
-			int bit = (val >> (5 - i)) & 1;
+		double rDist = 477.0 / (double)bits;
+		for(int i = 0; i < bits; i++) {
+			int bit = (val >> (bits - 1 - i)) & 1;
 			if(bit == 1) g.setColor(lightColor);
 			else g.setColor(Color.DARK_GRAY);
 			g.fillRect((int)((double)i * rDist), 0, 28, 28);
