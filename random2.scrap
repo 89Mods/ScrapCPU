@@ -1,0 +1,29 @@
+MAIN    
+    SUBc
+    STOREA		17
+    qEQL		31
+    ADD
+    MAG
+    LOAD		30
+    NOP
+    STORE		54
+    qMAG
+    qSUB		15
+    STOREA		13
+    qEQL
+    qADDc
+    NOP
+    STOREA
+    EQL		53
+    LOADi		9
+    qSUBc
+    qMAG		49
+    STORE
+    ADD		4
+    LOADi		3
+    qSUB		25
+    STORE		57
+    qMAG		11
+    qSUBc		27
+    STORE		61
+    qEQL

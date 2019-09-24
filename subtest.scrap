@@ -6,7 +6,33 @@ MAIN
 	LOAD		22
 	SUB			61
 	OUT
-	JMP			HALT
+	
+	LOADi		1
+	STOREA		0
+	LOADi		3
+	STOREA		1
+	
+	LOADi		3
+	STOREA		2
+	LOADi		3
+	STOREA		3
+	
+	LOAD		0
+	qSUB		2
+	STORE
+	LOAD		1
+	qSUBc		3
+	STORE
+	
+	LOAD		2
+	STOREA		63
+	LOAD		3
+	STOREA		63
+	
+	LOADp		HALT_hi
+	LOADi		HALT_lo
+	STOREA		33
+	JMP
 	
 HALT
-	JMP			HALT
+	JMP

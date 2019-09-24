@@ -2,18 +2,19 @@ SYMBOL		X_hi	2
 SYMBOL		X_lo	3
 SYMBOL		Y_hi	4
 SYMBOL		Y_lo	5
+SYMBOL		Z_th	1
 SYMBOL		Z_hi	6
 SYMBOL		Z_lo	7
 SYMBOL		TEMP_hi	8
 SYMBOL		TEMP_lo	9
 MAIN							# Set up variables
-	LOADi		38
+	LOADi		9
 	STOREA		X_lo
-	LOADi		1
+	LOADi		3
 	STOREA		X_hi
-	LOADi		14
+	LOADi		33
 	STOREA		Y_lo
-	LOADi		1
+	LOADi		7
 	STOREA		Y_hi
 	
 	LOADi		0
@@ -29,6 +30,9 @@ MUL_LOOP						# Do the actual Multiplication
 	STORE
 	LOAD		X_hi
 	qADDc		Z_hi
+	STORE
+	LOADi		0
+	qADDc		Z_th
 	STORE
 	
 	LOADi		1
@@ -51,7 +55,7 @@ MUL_CHECK_EQL
 	
 HALT							# Output result and halt
 	LOADi		0
-	qADD		Z_lo
+	qADD		Z_th
 	OUT
 	NOP
 	NOP

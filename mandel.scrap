@@ -1,0 +1,332 @@
+SYMBOL		FRAME_BUFFER_START		14
+SYMBOL		C1_LO		1
+SYMBOL		C2_HI		2
+SYMBOL		MAX_ITERS	62
+
+SYMBOL		FRAME_PNTR	0
+SYMBOL		X_CNTR		1
+SYMBOL		Y_CNTR		2
+SYMBOL		ITER_CNTR	3
+SYMBOL		c_im_hi		4
+SYMBOL		c_im_lo		5
+SYMBOL		c_re_hi		6
+SYMBOL		c_re_lo		7
+SYMBOL		mYY_hi		8
+SYMBOL		mYY_lo		9
+SYMBOL		mX_hi		10
+SYMBOL		mX_lo		11
+SYMBOL		mY_hi		12
+SYMBOL		mY_lo		13
+
+MAIN
+	LOADi		FRAME_BUFFER_START
+	STOREA		FRAME_PNTR
+	LOADi		0
+	STOREA		X_CNTR
+	STORE		Y_CNTR
+	
+FOR_ONE
+	
+	#calculate c_im
+	LOAD		Y_CNTR
+	STOREA		X_hi
+	LOADi		0
+	STOREA		X_lo
+	STORE		Y_hi
+	LOADi		C1_LO
+	STOREA		Y_lo
+	
+	LOADi		S1_hi
+	STOREA		61
+	LOADi		S1_lo
+	STOREA		62
+	JMP			MUL
+S1
+	LOADi		0b100000
+	qADD		Z_hi
+	STORE
+	LOADi		1
+	qADDc		Z_th
+	STORE
+	
+	LOADi		C2_HI
+	qMAG		Z_th
+	JNZ			D3
+	LOADi		C2_HI
+	STOREA		c_im_hi
+	LOAD		Z_th
+	qSUB		c_im_hi
+	STORE
+	LOAD		Z_hi
+	STOREA		c_im_lo
+	JMP			D4
+	
+D3
+	LOADi		0
+	qSUB		Z_hi
+	STORE		c_im_lo
+	LOADi		C2_HI
+	qSUBc		Z_th
+	STORE		c_im_hi
+D4
+	
+	LOADi		0
+	STOREA		X_CNTR
+FOR_TWO
+	
+	#calculate c_re
+	LOAD		X_CNTR
+	STOREA		X_hi
+	LOADi		0
+	STOREA		X_lo
+	STORE		Y_hi
+	LOADi		C1_LO
+	STOREA		Y_lo
+	
+	LOADi		S2_hi
+	STOREA		61
+	LOADi		S2_lo
+	STOREA		62
+	JMP			MUL
+S2
+	
+	LOADi		0b100000
+	qADD		Z_hi
+	STORE
+	LOADi		1
+	qADDc		Z_th
+	STORE
+	
+	LOADi		C2_HI
+	qMAG		Z_th
+	JNZ			D1
+	LOADi		C2_HI
+	STOREA		c_re_hi
+	LOAD		Z_th
+	qSUB		c_re_hi
+	STORE
+	LOAD		Z_hi
+	STOREA		c_re_lo
+	JMP			D2
+	
+D1
+	LOADi		0
+	qSUB		Z_hi
+	STORE		c_re_lo
+	LOADi		C2_HI
+	qSUBc		Z_th
+	STORE		c_re_hi
+D2
+	
+	LOAD		c_im_lo
+	STOREA		mY_lo
+	LOAD		c_im_hi
+	STOREA		mY_hi
+	LOAD		c_re_lo
+	STOREA		mX_lo
+	LOAD		c_re_hi
+	STOREA		mX_hi
+	LOADi		0
+	STOREA		ITER_CNTR
+CALC_LOOP
+
+	#yy = y * y
+	LOAD		mY_hi
+	STOREA		X_hi
+	STORE		Y_hi
+	LOAD		mY_lo
+	STOREA		X_lo
+	STORE		Y_lo
+	
+	LOADi		S3_hi
+	STOREA		61
+	LOADi		S3_lo
+	STOREA		62
+	JMP			MUL
+S3
+	LOAD		Z_th
+	STOREA		mYY_hi
+	LOAD		Z_hi
+	STOREA		mYY_lo
+	
+	#y = x * y * 2 + c_im
+	LOAD		mX_hi
+	STOREA		X_hi
+	LOAD		mX_lo
+	STOREA		X_lo
+	LOAD		mY_hi
+	STOREA		Y_hi
+	LOAD		mY_lo
+	STOREA		Y_lo
+	
+	LOADi		S4_hi
+	STOREA		61
+	LOADi		S4_lo
+	STOREA		62
+	JMP			MUL
+S4
+	LOAD		Z_hi
+	qADD		Z_hi
+	STORE		mY_lo
+	LOAD		Z_th
+	qADDc 		Z_th
+	STORE		mY_hi
+	
+	LOAD		c_im_lo
+	qADD		mY_lo
+	STORE
+	LOAD		c_im_hi
+	qADDc		mY_hi
+	STORE
+	
+	#x = x * x
+	LOAD		mX_hi
+	STOREA		X_hi
+	STORE		Y_hi
+	LOAD		mX_lo
+	STOREA		X_lo
+	STORE		Y_lo
+	
+	LOADi		S5_hi
+	STOREA		61
+	LOADi		S5_lo
+	STOREA		62
+	JMP			MUL
+S5
+	#Exit conditions
+	LOADi		1
+	qADD		ITER_CNTR
+	STORE
+	LOADi		MAX_ITERS
+	qEQL		ITER_CNTR
+	JNZ			CALC_LOOP_EXIT
+	
+	LOAD		Z_th
+	qADD		mYY_hi
+	STORE		61
+	
+	LOADi		6
+	qMAG		61
+	JZ			CALC_LOOP_EXIT
+	
+	#x = x - yy + c_re
+	LOAD		Z_hi
+	qSUB		mYY_lo
+	STORE		mX_lo
+	LOAD		Z_th
+	qSUBc		mYY_hi
+	STORE		mX_hi
+	
+	LOAD		c_re_lo
+	qADD		mX_lo
+	STORE
+	LOAD		c_re_hi
+	qADDc		mX_hi
+	STORE
+	
+	JMP			CALC_LOOP
+CALC_LOOP_EXIT
+
+	#Store pixel
+	#LOAD		ITER_CNTR
+	#LOADm		FRAME_PNTR
+	#LOADm
+	#STOREA
+	#LOADi		1
+	#qADD		FRAME_PNTR
+	#STORE
+	LOADi		63
+	STOREA		63
+	LOAD		ITER_CNTR
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	
+	#Incr X_CNTR
+	LOADi		1
+	qADD		X_CNTR
+	STORE
+	LOADi		63
+	qEQL		X_CNTR
+	JZ			FOR_TWO
+	
+	#Incr Y_CNTR
+	LOADi		1
+	qADD		Y_CNTR
+	STORE
+	LOADi		63
+	qEQL		Y_CNTR
+	JZ			FOR_ONE
+	
+HALT
+	LOADi		42
+	STOREA		63
+	JMP		HALT
+
+# Pointers to arithmetic function arguments
+
+SYMBOL		X_hi	52
+SYMBOL		X_lo	53
+SYMBOL		Y_hi	54
+SYMBOL		Y_lo	55
+SYMBOL		Z_th	56
+SYMBOL		Z_hi	57
+SYMBOL		Z_lo	58
+SYMBOL		TEMP_hi	59
+SYMBOL		TEMP_lo	60
+
+# Multiplication Subroutine
+
+MUL							# Set up variables
+	LOADi		0
+	STOREA		Z_th
+	STORE		Z_lo
+	STORE		Z_hi
+	qEQL		Y_hi
+	STORE		TEMP_hi
+	EQL			Y_lo
+	qADD		TEMP_hi
+	STORE
+	LOADi		2
+	qEQL		Z_th
+	JNZ			MUL_FINISH
+	
+	LOADi		0
+	STOREA		TEMP_hi
+	STORE		TEMP_lo
+	JMP			MUL_LOOP
+	
+MUL_LOOP						# Do the actual Multiplication
+	LOAD		X_lo
+	qADD		Z_lo
+	STORE
+	LOAD		X_hi
+	qADDc		Z_hi
+	STORE
+	LOADi		0
+	qADDc		Z_th
+	STORE
+	
+	LOADi		1
+	qADD		TEMP_lo
+	STORE
+	LOADi		0
+	qADDc		TEMP_hi
+	STORE
+	
+	LOAD		TEMP_lo
+	qEQL		Y_lo
+	JNZ			MUL_CHECK_EQL
+	JMP			MUL_LOOP
+	
+MUL_CHECK_EQL
+	LOAD		TEMP_hi
+	qEQL		Y_hi
+	JZ			MUL_LOOP
+	
+MUL_FINISH
+	LOADm		61
+	LOADp
+	LOADm		62
+	JMP

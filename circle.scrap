@@ -1,0 +1,153 @@
+SYMBOL		RADIUS_HI		3	#3.8375
+SYMBOL		RADIUS_LO		53
+SYMBOL		PI_HI			3
+SYMBOL		PI_LO			9
+
+MAIN
+	LOADi		RADIUS_HI
+	STOREA		0
+	LOADi		RADIUS_LO
+	STOREA		1
+	
+	LOADi		2
+	STOREA		X_hi
+	LOADi		0
+	STOREA		X_lo
+	LOAD		0
+	STOREA		Y_hi
+	LOAD		1
+	STOREA		Y_lo
+	
+	LOADi		S1_hi
+	STOREA		61
+	LOADi		S1_lo
+	STOREA		62
+	JMP			MUL
+S1
+	LOAD		Z_th
+	STOREA		X_hi
+	LOAD		Z_hi
+	STOREA		X_lo
+	LOADi		PI_HI
+	STOREA		Y_hi
+	LOADi		PI_LO
+	STOREA		Y_lo
+	
+	LOADi		S2_hi
+	STOREA		61
+	LOADi		S2_lo
+	STOREA		62
+	JMP			MUL
+S2
+	LOAD		Z_th
+	STOREA		2
+	LOAD		Z_hi
+	STOREA		3
+	
+	LOAD		0
+	STOREA		Y_hi
+	STORE		X_hi
+	LOAD		1
+	STOREA		Y_lo
+	STORE		X_lo
+	
+	LOADi		S3_hi
+	STOREA		61
+	LOADi		S3_lo
+	STOREA		62
+	JMP			MUL
+S3
+	LOAD		Z_th
+	STOREA		X_hi
+	LOAD		Z_hi
+	STOREA		X_lo
+	LOADi		PI_HI
+	STOREA		Y_hi
+	LOADi		PI_LO
+	STOREA		Y_lo
+	
+	LOADi		S4_hi
+	STOREA		61
+	LOADi		S4_lo
+	STOREA		62
+	JMP			MUL
+S4
+	LOAD		Z_th
+	STOREA		4
+	LOAD		Z_hi
+	STOREA		5
+	
+HALT
+	
+	LOAD		2
+	STOREA		63
+	NOP
+	LOAD		3
+	STOREA		63
+	NOP
+	LOADi		0
+	STOREA		63
+	NOP
+	LOAD		4
+	STOREA		63
+	NOP
+	LOAD		5
+	STOREA		63
+	NOP
+	
+	JMP			HALT
+
+SYMBOL		X_hi	52
+SYMBOL		X_lo	53
+SYMBOL		Y_hi	54
+SYMBOL		Y_lo	55
+SYMBOL		Z_th	56
+SYMBOL		Z_hi	57
+SYMBOL		Z_lo	58
+SYMBOL		TEMP_hi	59
+SYMBOL		TEMP_lo	60
+
+# Multiplication Subroutine
+
+MUL							# Set up variables
+	LOADi		0
+	STOREA		TEMP_hi
+	STORE		TEMP_lo
+	STORE		Z_hi
+	STORE		Z_lo
+	STORE		Z_th
+	JMP			MUL_LOOP
+	
+MUL_LOOP						# Do the actual Multiplication
+	LOAD		X_lo
+	qADD		Z_lo
+	STORE
+	LOAD		X_hi
+	qADDc		Z_hi
+	STORE
+	LOADi		0
+	qADDc		Z_th
+	STORE
+	
+	LOADi		1
+	qADD		TEMP_lo
+	STORE
+	LOADi		0
+	qADDc		TEMP_hi
+	STORE
+	
+	LOAD		TEMP_lo
+	qEQL		Y_lo
+	JNZ			MUL_CHECK_EQL
+	JMP			MUL_LOOP
+	
+MUL_CHECK_EQL
+	LOAD		TEMP_hi
+	qEQL		Y_hi
+	JZ			MUL_LOOP
+	
+MUL_FINISH
+	LOADm		61
+	LOADp
+	LOADm		62
+	JMP

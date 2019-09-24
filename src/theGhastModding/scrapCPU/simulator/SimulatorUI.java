@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -30,6 +31,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.exbin.bined.swing.CodeArea;
 import org.exbin.utils.binary_data.ByteArrayEditableData;
+import javax.swing.JCheckBox;
 
 public class SimulatorUI extends JPanel implements Runnable {
 	
@@ -80,6 +82,8 @@ public class SimulatorUI extends JPanel implements Runnable {
 	private JLabel lblOutputHexValue; private String outputHexValuetext = "Hex Value: ";
 	
 	private JPanel panelOutput;
+	
+	private JCheckBox chckbxNewCheckBox;
 	
 	private CodeArea txtpnA;
 	private CodeArea txtpnB;
@@ -349,6 +353,29 @@ public class SimulatorUI extends JPanel implements Runnable {
 			}
 		});
 		fileMenu.add(openItem);
+		
+		JMenuItem dumpItem = new JMenuItem("Dump RAM");
+		dumpItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				boolean prevSimulate = simulate;
+				simulate = false;
+				try {
+					FileOutputStream fos = new FileOutputStream("dump.dat");
+					for(int i = 0; i < 64; i++) {
+						fos.write((byte)simulator.RAM[i]);
+					}
+					fos.close();
+				}catch(Exception e) {
+					JOptionPane.showMessageDialog(parrent, "Error doing RAM dump: " + e.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					e.printStackTrace();
+					System.exit(1);
+				}
+				simulate = prevSimulate;
+			}
+		});
+		fileMenu.add(dumpItem);
+		
 		JMenuItem exitItem = new JMenuItem("Exit");
 		exitItem.addActionListener(new ActionListener() {
 			@Override
@@ -359,6 +386,10 @@ public class SimulatorUI extends JPanel implements Runnable {
 		fileMenu.add(exitItem);
 		
 		TypeConverter tc = new TypeConverter(this);
+		
+		chckbxNewCheckBox = new JCheckBox("Hyperspeed");
+		chckbxNewCheckBox.setBounds(390, 45, 126, 23);
+		add(chckbxNewCheckBox);
 		
 		JMenu toolsMenu = new JMenu("Tools");
 		menuBar.add(toolsMenu);
@@ -392,43 +423,56 @@ public class SimulatorUI extends JPanel implements Runnable {
 	public void run() {
 		
 		running = true;
+		long startTime = System.currentTimeMillis();
+		int prevDisplay = 0;
 		while(running) {
 			
 			if(simulate) {
 				simulator.step();
 			}
+			if(simulator.RAM[63] != prevDisplay) {
+				prevDisplay = simulator.RAM[63];
+				System.out.println(Integer.toString(simulator.RAM[63]));
+			}
 			
-			renderRegisterValue(simulator.PC, panelPC, 9);
-			lvalueDPC.setText(DPCtext + Integer.toString(simulator.PC));
-			lvalueHPC.setText(HPCtext + Integer.toHexString(simulator.PC));
-			renderRegisterValue(simulator.ins, panelINSIN, 6);
-			lvalueDINSIN.setText(DINSINtext + Integer.toString(simulator.ins));
-			lvalueHINSIN.setText(HINSINtext + Integer.toHexString(simulator.ins));
-			renderRegisterValue(simulator.A, panelA, 6);
-			lvalueDA.setText(DAtext + Integer.toString(simulator.A));
-			lvalueHA.setText(HAtext + Integer.toHexString(simulator.A));
-			renderRegisterValue(simulator.B, panelB, 6);
-			lvalueDB.setText(DBtext + Integer.toString(simulator.B));
-			lvalueHB.setText(HBtext + Integer.toHexString(simulator.B));
-			renderRegisterValue(simulator.M, panelM, 6);
-			lvalueDM.setText(DMtext + Integer.toString(simulator.M));
-			lvalueHM.setText(HMtext + Integer.toHexString(simulator.M));
-			renderRegisterValue(simulator.P, panelP, 3);
-			lvalueDP.setText(DPtext + Integer.toString(simulator.P));
-			lvalueHP.setText(HPtext + Integer.toHexString(simulator.P));
-			
-			lblflag.setText(flagtext + (simulator.zero ? "1" : "0"));
-			lblCarryFlag.setText(lblCarrytext + (simulator.carry ? "1" : "0"));
-			
-			renderSegmentDisplay(simulator.RAM[63], panelOutput);
-			lblOutputHexValue.setText(outputHexValuetext + Integer.toHexString(simulator.RAM[63]));
-			
-			for(int i = 0; i < 64; i++) RAM_mirror[i] = (byte)simulator.RAM[i];
-			txtpnA.notifyDataChanged();
-			txtpnB.notifyDataChanged();
+			if(!chckbxNewCheckBox.isSelected() || (System.currentTimeMillis() - startTime >= 100)) {
+				renderRegisterValue(simulator.PC, panelPC, 9);
+				lvalueDPC.setText(DPCtext + Integer.toString(simulator.PC));
+				lvalueHPC.setText(HPCtext + Integer.toHexString(simulator.PC));
+				renderRegisterValue(simulator.ins, panelINSIN, 6);
+				lvalueDINSIN.setText(DINSINtext + Integer.toString(simulator.ins));
+				lvalueHINSIN.setText(HINSINtext + Integer.toHexString(simulator.ins));
+				renderRegisterValue(simulator.A, panelA, 6);
+				lvalueDA.setText(DAtext + Integer.toString(simulator.A));
+				lvalueHA.setText(HAtext + Integer.toHexString(simulator.A));
+				renderRegisterValue(simulator.B, panelB, 6);
+				lvalueDB.setText(DBtext + Integer.toString(simulator.B));
+				lvalueHB.setText(HBtext + Integer.toHexString(simulator.B));
+				renderRegisterValue(simulator.M, panelM, 6);
+				lvalueDM.setText(DMtext + Integer.toString(simulator.M));
+				lvalueHM.setText(HMtext + Integer.toHexString(simulator.M));
+				renderRegisterValue(simulator.P, panelP, 3);
+				lvalueDP.setText(DPtext + Integer.toString(simulator.P));
+				lvalueHP.setText(HPtext + Integer.toHexString(simulator.P));
+				
+				lblflag.setText(flagtext + (simulator.zero ? "1" : "0"));
+				lblCarryFlag.setText(lblCarrytext + (simulator.carry ? "1" : "0"));
+				
+				renderSegmentDisplay(simulator.RAM[63], panelOutput);
+				lblOutputHexValue.setText(outputHexValuetext + Integer.toHexString(simulator.RAM[63]));
+				
+				if(System.currentTimeMillis() - startTime >= 100) {
+					startTime = System.currentTimeMillis();
+					for(int i = 0; i < 64; i++) RAM_mirror[i] = (byte)simulator.RAM[i];
+					txtpnA.notifyDataChanged();
+					txtpnB.notifyDataChanged();
+				}
+			}
 			
 			try {
-				if(simulate) Thread.sleep(Math.max(1000 - (slider.getValue() * 10), 1));
+				if(simulate) {
+					if(!chckbxNewCheckBox.isSelected()) Thread.sleep(Math.max(1000 - (slider.getValue() * 10), 1));
+				}
 				else Thread.sleep(100);
 			}catch(Exception e) {e.printStackTrace();}
 		}

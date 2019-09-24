@@ -287,7 +287,7 @@ public class Assembler {
 					}
 				}
 				if(ins == null) {
-					System.err.println(String.format("Error on line %d: Invalid Instruction!", unwrappedSources.get(i)));
+					System.err.println(String.format("Error on line %d: Invalid Instruction (" + line.split("[ \t]")[0] + ")!", unwrappedSources.get(i)));
 					System.exit(1);
 				}
 				instructionAddr[i] = addrCntr;
@@ -401,7 +401,7 @@ public class Assembler {
 					}
 				}
 				if(ins == null) {
-					System.err.println(String.format("Error on line %d: Invalid Instruction!", unwrappedSources.get(i)));
+					System.err.println(String.format("Error on line %d: Invalid Instruction (" + line.split("[ \t]")[0] + ")!", unwrappedSources.get(i)));
 					System.exit(1);
 				}
 				bytecode[bytecodeSize] = (byte)ins.opcode;

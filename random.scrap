@@ -1,0 +1,29 @@
+MAIN
+    SUB
+    qRSH		22
+    SUBc
+    LOADm
+    SUBc
+    qLSH
+    qADDc
+    LOAD
+    RSH		    30
+    qRSH		63
+    qRSH
+    LOADm		30
+    qLSH		5
+    LOADm
+    ADDc		33
+    qLSH		23
+    LSH
+    RSH		    34
+    MAG
+    RSH
+    SUB		    49
+    LOAD
+    ADDc
+    qLSH		48
+    ADD		    25
+    qLSH		6
+    LSH		    42
+    SUB
