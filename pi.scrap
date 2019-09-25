@@ -145,7 +145,7 @@ DIV_MAG
 	qADD		Y_lo
 	STORE
 	LOADi		2
-	qEQL		Y_lo
+	qEQL
 	JNZ			DIV_EQL
 	LOADi		0
 	JMP			DIV_FINISH

@@ -1,0 +1,109 @@
+# Computes factorials (only works up to 10! and minimum input of 2)
+SYMBOL		INPUT		10
+
+MAIN
+	LOADi		1		#cntr = 1
+	STOREA		0
+	STORE		Z_lo		#c = 1
+	LOADi		0
+	STOREA		Z_hi		#init some stuff as 0
+	STORE		Z_th
+	STORE		Z_fo	
+	LOADi		INPUT		#end = input + 1
+	qADD		0
+	STORE		1
+LOOP
+	LOADi		1		#cntr++
+	ADD		0
+	STORE
+	STORE		63
+	qEQL		1		#if cntr == end goto halt
+	JNZ		HALT
+		
+	# Put mul here	
+	LOAD		Z_lo		#a = c
+	STOREA		X_lo
+	LOAD		Z_hi
+	STOREA		X_hi
+	LOAD		Z_th
+	STOREA		X_th	
+	LOAD		Z_fo
+	STOREA		X_fo	
+	LOAD		0		#b = cntr
+	STOREA		Y
+
+	LOADi		S1_hi		#c = a * b
+	STOREA		61
+	LOADi		S1_lo
+	STOREA		62
+	JMP		MUL	
+S1
+
+	JMP		LOOP
+HALT
+	LOAD		Z_lo		#display the 4-word value c one word at a time
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	LOAD		Z_hi
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	LOAD		Z_th
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	LOAD		Z_fo
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	JMP		HALT		#while(1)
+
+SYMBOL		X_lo		51		
+SYMBOL		X_hi		52
+SYMBOL		X_th		53
+SYMBOL		X_fo		54
+SYMBOL		Y		55
+SYMBOL		Z_lo		56
+SYMBOL		Z_hi		57
+SYMBOL		Z_th		58
+SYMBOL		Z_fo		59
+SYMBOL		TEMP		60
+MUL							# Set up variables
+	LOADi		0
+	STOREA		TEMP
+	STORE		Z_lo
+	STORE		Z_hi
+	STORE		Z_th
+	STORE		Z_fo
+	JMP		MUL_LOOP
+	
+MUL_LOOP						# Do the actual Multiplication
+	LOAD		X_lo
+	qADD		Z_lo
+	STORE
+	LOAD		X_hi
+	qADDc		Z_hi
+	STORE
+	LOAD		X_th
+	qADDc		Z_th
+	STORE
+	LOAD		X_fo
+	qADDc		Z_fo
+	STORE
+	LOADi		1
+	ADD		TEMP
+	STORE
+	qEQL		Y
+	JNZ		MUL_FINISH
+	JMP		MUL_LOOP
+	
+MUL_FINISH
+	LOADm		61
+	LOADp
+	LOADm		62
+	JMP
