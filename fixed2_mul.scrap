@@ -1,0 +1,177 @@
+#173,8925×1,7309
+
+#lo: 000111
+#hi: 111001
+#th: 101101
+#fo: 000010
+
+#lo: 110001
+#hi: 101110
+#th: 000001
+#fo: 000000
+
+#lo: 011001 - 25
+#hi: 111111 - 63
+#th: 101100 - 44
+#fo: 000100 - 4
+
+MAIN
+
+	LOADi		0b000111
+	STOREA		X_lo
+	LOADi		0b111001
+	STOREA		X_hi
+	LOADi		0b101101
+	STOREA		X_th
+	LOADi		0b000010
+	STOREA		X_fo
+
+	LOADi		0b110001
+	STOREA		Y_lo
+	LOADi		0b101110
+	STOREA		Y_hi
+	LOADi		0b000001
+	STOREA		Y_th
+	LOADi		0b000000
+	STOREA		Y_fo
+	
+	LOADi		HALT_hi
+	STOREA		61
+	LOADi		HALT_lo
+	STOREA		62
+	JMP		MUL
+
+HALT
+	LOAD		Z_th
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	LOAD		Z_fo
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	LOAD		Z_fv
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	LOAD		Z_sx
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP	
+	JMP		HALT
+
+# Pointers to arithmetic function arguments
+
+SYMBOL		C_TEMP	42
+
+SYMBOL		X_fo	43
+SYMBOL		X_th	44
+SYMBOL		X_hi	45
+SYMBOL		X_lo	46
+
+SYMBOL		Y_fo	47
+SYMBOL		Y_th	48
+SYMBOL		Y_hi	49
+SYMBOL		Y_lo	50
+
+SYMBOL		Z_sx	51
+SYMBOL		Z_fv	52
+SYMBOL		Z_fo	53
+SYMBOL		Z_th	54
+SYMBOL		Z_hi	55
+SYMBOL		Z_lo	56
+
+SYMBOL		TEMP_fo	57
+SYMBOL		TEMP_th	58
+SYMBOL		TEMP_hi	59
+SYMBOL		TEMP_lo	60
+
+# Multiplication Subroutine
+
+MUL							# Set up variables
+	LOADi		0
+	STOREA		TEMP_hi
+	STORE		TEMP_lo
+	STORE		TEMP_th
+	STORE		TEMP_fo
+	STORE		Z_hi
+	STORE		Z_lo
+	STORE		Z_th
+	STORE		Z_fo
+	STORE		Z_fv
+	STORE		Z_sx	
+	JMP		MUL_LOOP
+	
+MUL_LOOP						# Do the actual Multiplication
+	LOAD		X_lo
+	qADD		Z_lo
+	STORE
+	LOAD		X_hi
+	qADDc		Z_hi
+	STORE
+	LOAD		X_th
+	qADDc		Z_th
+	STORE
+	LOAD		X_fo
+	qADDc		Z_fo
+	STORE
+	LOADi		0
+	qADDc		Z_fv
+	STORE
+	qADDc		Z_sx
+	STORE
+	
+	LOADi		1
+	qADD		TEMP_lo
+	STORE
+	LOADi		0
+	qADDc		TEMP_hi
+	STORE
+	qADDc		TEMP_th
+	STORE
+	qADDc		TEMP_fo
+	STORE
+	
+	LOAD		TEMP_lo
+	qEQL		Y_lo
+	STORE		C_TEMP
+	LOAD		TEMP_hi
+	EQL		Y_hi
+	qADD		C_TEMP
+	STORE
+	LOAD		TEMP_th
+	EQL		Y_th
+	qADD		C_TEMP
+	STORE
+	LOAD		TEMP_fo
+	EQL		Y_fo
+	qADD		C_TEMP
+	STORE
+	LOADi		4
+	qEQL		C_TEMP
+	
+	JNZ		MUL_FINISH
+	JMP		MUL_LOOP
+	
+MUL_FINISH
+	LOADm		61
+	LOADp
+	LOADm		62
+	JMP

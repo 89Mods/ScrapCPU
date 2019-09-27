@@ -1,0 +1,194 @@
+#173,8925/1,7309
+
+#lo: 000111
+#hi: 111001
+#th: 101101
+#fo: 000010
+
+#lo: 110001
+#hi: 101110
+#th: 000001
+#fo: 000000
+
+# Correct: 100.4636
+# Result: 100.4744
+
+MAIN
+
+	LOADi		0b000111
+	STOREA		X_th
+	LOADi		0b111001
+	STOREA		X_fo
+	LOADi		0b101101
+	STOREA		X_fv
+	LOADi		0b000010
+	STOREA		X_sx
+	LOADi		0
+	STOREA		X_hi
+	STORE		X_lo
+
+	LOADi		0b110001
+	STOREA		Y_lo
+	LOADi		0b101110
+	STOREA		Y_hi
+	LOADi		0b000001
+	STOREA		Y_th
+	LOADi		0b000000
+	STOREA		Y_fo
+	
+	LOADi		HALT_hi
+	STOREA		61
+	LOADi		HALT_lo
+	STOREA		62
+	JMP		DIV
+
+HALT
+	LOAD		Z_lo
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	LOAD		Z_hi
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	LOAD		Z_th
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	LOAD		Z_fo
+	STOREA		63
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP	
+	JMP		HALT
+
+# Pointers to arithmetic function arguments
+
+SYMBOL		C_TEMP	40
+
+SYMBOL		X_sx	41
+SYMBOL		X_fv	42
+SYMBOL		X_fo	43
+SYMBOL		X_th	44
+SYMBOL		X_hi	45
+SYMBOL		X_lo	46
+
+SYMBOL		Y_fo	47
+SYMBOL		Y_th	48
+SYMBOL		Y_hi	49
+SYMBOL		Y_lo	50
+
+SYMBOL		Z_sx	51
+SYMBOL		Z_fv	52
+SYMBOL		Z_fo	53
+SYMBOL		Z_th	54
+SYMBOL		Z_hi	55
+SYMBOL		Z_lo	56
+
+SYMBOL		TEMP_fo	57
+SYMBOL		TEMP_th	58
+SYMBOL		TEMP_hi	59
+SYMBOL		TEMP_lo	60
+
+# Division Subroutine
+	
+DIV
+	LOADi		0
+	STOREA		Z_hi
+	STORE		Z_lo
+	STORE		Z_th
+	STORE		Z_fo
+	STORE		TEMP_hi
+	STORE		TEMP_lo
+	STORE		TEMP_th
+	STORE		TEMP_fo
+	
+DIV_LOOP
+	LOAD		X_sx
+	STOREA		C_TEMP
+	LOAD		X_lo
+	qSUB		Y_lo
+	STORE		X_lo
+	LOAD		X_hi
+	qSUBc		Y_hi
+	STORE		X_hi
+	LOAD		X_th
+	qSUBc		Y_th
+	STORE		X_th
+	LOAD		X_fo
+	qSUBc		Y_fo
+	STORE		X_fo
+	LOAD		X_fv
+	qSUBc		TEMP_lo
+	STORE		X_fv
+	LOAD		X_sx
+	SUBc		TEMP_lo
+	STORE		X_sx
+	qMAG		C_TEMP
+	JNZ		DIV_MAG	
+
+	LOADi		1
+	qADD		Z_lo
+	STORE
+	LOADi		0
+	qADDc		Z_hi
+	STORE
+	qADDc		Z_th
+	STORE
+	qADDc		Z_fo
+	STORE
+	JMP		DIV_LOOP
+	
+DIV_MAG
+	LOAD		X_lo
+	qEQL		Y_lo
+	STORE		C_TEMP
+	LOAD		X_hi
+	EQL		Y_hi
+	qADD		C_TEMP
+	STORE
+	LOAD		X_th
+	EQL		Y_th
+	qADD		C_TEMP
+	STORE
+	LOAD		X_fo
+	EQL		Y_fo
+	qADD		C_TEMP
+	STORE
+	LOADi		4
+	qEQL		C_TEMP
+	JNZ		DIV_EQL
+	LOADi		0
+	JMP		DIV_FINISH
+	
+DIV_EQL
+	LOADi		1
+	JMP		DIV_FINISH
+	
+DIV_FINISH
+	qADD		Z_lo
+	STORE
+	LOADi		0
+	qADDc		Z_hi
+	STORE
+	LOADm		61
+	LOADp
+	LOADm		62
+	JMP

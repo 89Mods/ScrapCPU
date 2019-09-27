@@ -1,5 +1,5 @@
 # Computes factorials (only works up to 10! and minimum input of 2)
-SYMBOL		INPUT		10
+SYMBOL		INPUT		9
 
 MAIN
 	LOADi		1		#cntr = 1
