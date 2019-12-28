@@ -91,6 +91,7 @@ public class SimulatorUI extends JPanel implements Runnable {
 	private Thread t;
 	
 	private Simulator simulator = new Simulator();
+	private MemoryVisualizer mv;
 	
 	public SimulatorUI(JFrame parrent) {
 		super();
@@ -386,6 +387,7 @@ public class SimulatorUI extends JPanel implements Runnable {
 		fileMenu.add(exitItem);
 		
 		TypeConverter tc = new TypeConverter(this);
+		mv = new MemoryVisualizer();
 		
 		chckbxNewCheckBox = new JCheckBox("Hyperspeed");
 		chckbxNewCheckBox.setBounds(390, 45, 126, 23);
@@ -401,6 +403,25 @@ public class SimulatorUI extends JPanel implements Runnable {
 			}
 		});
 		toolsMenu.add(converterItem);
+		JMenuItem randomnizeItem = new JMenuItem("Randomnize Memory Contents");
+		randomnizeItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				Random rng = new Random();
+				for(int i = 0; i < 64; i++) {
+					simulator.RAM[i] = rng.nextInt(64);
+				}
+			}
+		});
+		toolsMenu.add(randomnizeItem);
+		JMenuItem visualizerItem = new JMenuItem("Memory visualizer");
+		visualizerItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				mv.showVisualizer(simulator);
+			}
+		});
+		toolsMenu.add(visualizerItem);
 		
 		parrent.setJMenuBar(menuBar);
 		
@@ -454,6 +475,7 @@ public class SimulatorUI extends JPanel implements Runnable {
 				renderRegisterValue(simulator.P, panelP, 3);
 				lvalueDP.setText(DPtext + Integer.toString(simulator.P));
 				lvalueHP.setText(HPtext + Integer.toHexString(simulator.P));
+				mv.updateThingy();
 				
 				lblflag.setText(flagtext + (simulator.zero ? "1" : "0"));
 				lblCarryFlag.setText(lblCarrytext + (simulator.carry ? "1" : "0"));

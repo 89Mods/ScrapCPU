@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -128,7 +129,16 @@ public class Assembler {
 	public static void main(String[] args) {
 		try {
 			
-			/*Random rng = new Random();
+			/*
+			 * 				if(line.startsWith("RETURN")) {
+					unwrapped.set(i, "LOADm 61");
+					unwrapped.add(i, "LOADp");
+					unwrapped.add(i, "LOADm 62");
+					unwrapped.add(i, "JMP");
+				}
+			 * 
+			 * 
+			 * Random rng = new Random();
 			String brokenProgram = "";
 			for(int i = 0; i != 32; i++) {
 				Instruction ins = opcodes.get(rng.nextInt(opcodes.size()));
@@ -239,7 +249,8 @@ public class Assembler {
 			
 			entryPoint.startAddr = 0;
 			Pattern p = Pattern.compile("[ \t]");
-			for(int j = -1; j < labels.size(); j++) {
+			int labelCnt = labels.size();
+			for(int j = -1; j < labelCnt; j++) {
 				Label label;
 				if(j == -1) {
 					label = entryPoint;
@@ -263,8 +274,38 @@ public class Assembler {
 							if(line.isEmpty() || line.isBlank()) continue;
 						}else continue;
 					}
-					unwrapped.add(line);
-					unwrappedSources.put(unwrapped.size() - 1, i);
+					
+					//Macros parsed here
+					if(line.startsWith("OUT")) {
+						line = "STORE\t63";
+					}
+					
+					if(line.startsWith("RETURN")) {
+						unwrapped.add("LOADm 61");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						unwrapped.add("LOADp");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						unwrapped.add("LOADm 62");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						unwrapped.add("JMP");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+					}else if(line.startsWith("CALL")) {
+						UUID callID = UUID.randomUUID();
+						unwrapped.add("LOADi CALL_" + callID.toString() + "_hi");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						unwrapped.add("STOREA 61");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						unwrapped.add("LOADi CALL_" + callID.toString() + "_lo");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						unwrapped.add("STOREA 62");
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						unwrapped.add(line.replaceFirst("CALL", "JMP"));
+						unwrappedSources.put(unwrapped.size() - 1, i);
+						labels.add(new Label("CALL_" + callID.toString(), i + 5, i + 5, unwrapped.size()));
+					}else{
+						unwrapped.add(line);
+						unwrappedSources.put(unwrapped.size() - 1, i);
+					}
 				}
 			}
 			
@@ -273,11 +314,6 @@ public class Assembler {
 			int addrCntr = 0;
 			for(int i = 0; i < unwrapped.size(); i++) {
 				String line = unwrapped.get(i);
-				
-				if(line.startsWith("OUT")) {
-					unwrapped.set(i, "STORE\t63");
-					line = "STORE 63";
-				}
 				
 				Instruction ins = null;
 				for(Instruction in:opcodes) {
@@ -342,11 +378,9 @@ public class Assembler {
 				}
 				
 				if(line.startsWith("JMP") || line.startsWith("JZ") || line.startsWith("JNZ")) {
-					//It's a jump instruction. Let's resolve its label into an actual ROM address.
+					//It's a jump instruction. Let's resolve its label into an actual ROM address.;
 					String[] jmp_args = line.split("[ \t]");
 					if(jmp_args.length < 2) {
-						//System.err.println(String.format("Error on line %d: Missing argument for instruction.", unwrappedSources.get(i)));
-						//System.exit(1);
 						//Is indirect
 						continue;
 					}
@@ -371,6 +405,7 @@ public class Assembler {
 						System.err.println("Invalid label name: " + labelName + "!");
 						System.exit(1);
 					}
+					
 					int addr = label.startAddr;
 					String pCmd = "LOADp " + Integer.toString((addr >>> 6) & 0b111);
 					addr &= 0b00111111;
