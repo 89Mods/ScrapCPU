@@ -4,23 +4,13 @@ MAIN
 	LOADi		7
 	STOREA		MY
 	
-	LOADi		S1_hi
-	STOREA		61
-	LOADi		S1_lo
-	STOREA		62
-	JMP			MUL
-S1
+	CALL		MUL
 	LOADi		9
 	STOREA		DY
 	LOAD		MZ
 	STOREA		DX
 	
-	LOADi		S2_hi
-	STOREA		61
-	LOADi		S2_lo
-	STOREA		62
-	JMP			DIV
-S2
+	CALL		DIV
 	LOADi		1
 	qADD		DZ
 	STORE		63
@@ -50,10 +40,7 @@ MUL_LOOP						# Do the actual Multiplication
 	JMP			MUL_LOOP
 	
 MUL_FINISH
-	LOADm		61
-	LOADp
-	LOADm		62
-	JMP
+	RETURN
 
 SYMBOL		DX		57
 SYMBOL		DY		58
@@ -88,7 +75,4 @@ DIV_EQL
 DIV_FINISH
 	qADD		DZ
 	STORE
-	LOADm		61
-	LOADp
-	LOADm		62
-	JMP
+	RETURN
