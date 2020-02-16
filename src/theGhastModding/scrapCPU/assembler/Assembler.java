@@ -164,9 +164,11 @@ public class Assembler {
 			br.close();
 			
 			for(int i = 0; i < lines.size(); i++) {
-				if(lines.get(i).contains("#")) {
-					int loc = lines.get(i).indexOf('#');
-					if(loc == 0) lines.set(i, "");
+				if(lines.get(i).contains("#") || lines.get(i).contains("//")) {
+					int loc = Integer.MAX_VALUE;
+					if(lines.get(i).contains("#")) loc = lines.get(i).indexOf('#');
+					if(lines.get(i).contains("//")) loc = Math.min(loc, lines.get(i).indexOf("//"));
+					if(loc <= 0) lines.set(i, "");
 					else lines.set(i, lines.get(i).substring(0, loc - 1));
 				}
 			}

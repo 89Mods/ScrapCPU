@@ -13,13 +13,8 @@ MAIN
 	STOREA		Y_hi
 	
 	#Z = X * Y
-	LOADi		S1_hi
-	STOREA		61
-	LOADi		S1_lo
-	STOREA		62
-	JMP			MUL
-
-S1
+	CALL		MUL
+	
 	#Y = 9.0
 	LOADi		0
 	STOREA		Y_lo
@@ -35,13 +30,8 @@ S1
 	STOREA		X_lo
 	
 	#Z = X / Y
-	LOADi		S2_hi
-	STOREA		61
-	LOADi		S2_lo
-	STOREA		62
-	JMP			DIV
+	CALL		DIV
 	
-S2
 	#Add 1.0
 	LOADi		1
 	qADD		Z_hi
@@ -68,6 +58,14 @@ HALT
 
 # Pointers to arithmetic function arguments
 
+SYMBOL		C1		43
+SYMBOL		C2		44
+SYMBOL		CNTR2	45
+SYMBOL		CNTR	46
+SYMBOL		LSH_V3	47
+SYMBOL		LSH_V2	48
+SYMBOL		LSH_V1	49
+SYMBOL		LSH_BY	50
 SYMBOL		X_th	51
 SYMBOL		X_hi	52
 SYMBOL		X_lo	53
@@ -80,83 +78,205 @@ SYMBOL		TEMP_hi	59
 SYMBOL		TEMP_lo	60
 
 # Multiplication Subroutine
-
-MUL							# Set up variables
-	LOADi		0
-	STOREA		TEMP_hi
-	STORE		TEMP_lo
-	STORE		Z_hi
-	STORE		Z_lo
-	STORE		Z_th
-	JMP			MUL_LOOP
+MUL
+	LOAD		62 // For call-stacking
+	STOREA		C1
+	LOAD		61
+	STOREA		C2
 	
-MUL_LOOP						# Do the actual Multiplication
 	LOAD		X_lo
+	STOREA		TEMP_lo
+	LOAD		X_hi
+	STOREA		TEMP_hi
+	LOADi		0
+	STOREA		CNTR
+	STORE		Z_lo
+	STORE		Z_hi
+	STORE		Z_th
+MUL_LOOP
+	LOADi		12
+	qEQL		CNTR
+	JNZ			MUL_FINISH
+	
+	LOADi		0
+	STOREA		LSH_BY
+	LOADi		32
+	qADD		TEMP_hi
+	LOADi		0
+	qADDc		LSH_BY // Which is now 0
+	JZ			MUL_HAS_NO_CARRY
+	
+	LOAD		Y_lo
+	STOREA		LSH_V1
+	LOAD		Y_hi
+	STOREA		LSH_V2
+	LOADi		11
+	qSUB		CNTR
+	STORE		LSH_BY
+	CALL		LEFTSHIFT
+	LOAD		LSH_V1
 	qADD		Z_lo
 	STORE
-	LOAD		X_hi
+	LOAD		LSH_V2
 	qADDc		Z_hi
 	STORE
-	LOADi		0
+	LOAD		LSH_V3
 	qADDc		Z_th
 	STORE
 	
-	LOADi		1
-	qADD		TEMP_lo
-	STORE
-	LOADi		0
-	qADDc		TEMP_hi
-	STORE
+MUL_HAS_NO_CARRY
 	
 	LOAD		TEMP_lo
-	qEQL		Y_lo
-	JNZ			MUL_CHECK_EQL
+	qADD
+	STORE
+	LOAD		TEMP_hi
+	qADDc
+	STORE
+	
+	LOADi		1
+	qADD		CNTR
+	STORE
+	
 	JMP			MUL_LOOP
 	
-MUL_CHECK_EQL
-	LOAD		TEMP_hi
-	qEQL		Y_hi
-	JZ			MUL_LOOP
-	
 MUL_FINISH
-	LOADm		61
-	LOADp
-	LOADm		62
-	JMP
+	LOAD		C1
+	STOREA		62
+	LOAD		C2
+	STOREA		61
+	RETURN
+
+# Leftshift Sub-subroutine
+
+LEFTSHIFT
+	LOADi		0
+	STOREA		CNTR2
+	STORE		LSH_V3
+LSH_LOOP
+	LOAD		LSH_BY
+	qEQL		CNTR2
+	JNZ			LSH_END
+	LOAD		LSH_V1
+	qADD
+	STORE
+	LOAD		LSH_V2
+	qADDc
+	STORE
+	LOAD		LSH_V3
+	qADDc		LSH_V3
+	STORE
+	LOADi		1
+	qADD		CNTR2
+	STORE
+	JMP			LSH_LOOP
+LSH_END
+	RETURN
+
+//MUL							# Set up variables
+//	LOADi		0
+//	STOREA		TEMP_hi
+//	STORE		TEMP_lo
+//	STORE		Z_hi
+//	STORE		Z_lo
+//	STORE		Z_th
+//	JMP			MUL_LOOP
+//	
+//MUL_LOOP						# Do the actual Multiplication
+//	LOAD		X_lo
+//	qADD		Z_lo
+//	STORE
+//	LOAD		X_hi
+//	qADDc		Z_hi
+//	STORE
+//	LOADi		0
+//	qADDc		Z_th
+//	STORE
+//	
+//	LOADi		1
+//	qADD		TEMP_lo
+//	STORE
+//	LOADi		0
+//	qADDc		TEMP_hi
+//	STORE
+//	
+//	LOAD		TEMP_lo
+//	qEQL		Y_lo
+//	JNZ			MUL_CHECK_EQL
+//	JMP			MUL_LOOP
+//	
+//MUL_CHECK_EQL
+//	LOAD		TEMP_hi
+//	qEQL		Y_hi
+//	JZ			MUL_LOOP
+//	
+//MUL_FINISH
+//	RETURN
 	
 # Division Subroutine
 	
 DIV
-		LOADi		0
-	STOREA		Z_hi
-	STORE		Z_lo
-	STORE		TEMP_hi
-	STORE		TEMP_lo
-	
-DIV_LOOP
 	LOADi		0
-	qEQL		X_th
-	JZ			SKIP
-	LOAD		X_hi
-	qEQL		Y_hi
-	JNZ			DIV_CHECK_LOW_WORD
-	qMAG		Y_hi
-	JMP			DIV_CHECK_HIGH_WORD
-DIV_CHECK_LOW_WORD
+	STOREA		Z_lo
+	STORE		Z_hi
+	STORE		TEMP_lo
+	STORE		TEMP_hi
+	STORE		CNTR
 	LOAD		X_lo
-	qMAG		Y_lo
-DIV_CHECK_HIGH_WORD
-	JZ			DIV_MAG
-SKIP
-	LOAD		X_lo
-	qSUB		Y_lo
-	STORE		X_lo
+	STOREA		LSH_V1
 	LOAD		X_hi
-	qSUBc		Y_hi
-	STORE		X_hi
+	STOREA		LSH_V2
 	LOAD		X_th
-	qSUBc		TEMP_lo
-	STORE		X_th
+	STOREA		LSH_V3
+DIV_LOOP
+	LOADi		18
+	qEQL		CNTR
+	JNZ			DIV_FINISH
+	
+	LOAD		Z_lo
+	qADD
+	STORE
+	LOAD		Z_hi
+	qADDc
+	STORE
+	
+	LOAD		LSH_V1
+	qADD
+	STORE
+	LOAD		LSH_V2
+	qADDc
+	STORE
+	LOAD		LSH_V3
+	qADDc
+	STORE
+	LOAD		TEMP_lo
+	qADDc
+	STORE
+	LOAD		TEMP_hi
+	qADDc
+	STORE
+	LOADi		0
+	qADDc		0
+	JNZ			DIV_DO_THE_THING
+	
+	LOAD		Y_hi
+	qEQL		TEMP_hi
+	JZ			DIV_COMPARE_HIGH
+	
+	LOAD		Y_lo
+	qMAG		TEMP_lo
+	JMP			DIV_COMPARED_LOW
+	
+DIV_COMPARE_HIGH
+	qMAG		TEMP_hi
+DIV_COMPARED_LOW
+	JNZ			DIV_NOT_LARGER_OR_EQUAL
+DIV_DO_THE_THING
+	LOAD		TEMP_lo
+	qSUB		Y_lo
+	STORE		TEMP_lo
+	LOAD		TEMP_hi
+	qSUBc		Y_hi
+	STORE		TEMP_hi
 	
 	LOADi		1
 	qADD		Z_lo
@@ -164,33 +284,80 @@ SKIP
 	LOADi		0
 	qADDc		Z_hi
 	STORE
+	
+DIV_NOT_LARGER_OR_EQUAL
+	
+	LOADi		1
+	qADD		CNTR
+	STORE
+	
 	JMP			DIV_LOOP
 	
-DIV_MAG
-	LOAD		X_lo
-	qEQL		Y_lo
-	STORE
-	LOAD		X_hi
-	EQL			Y_hi
-	qADD		Y_lo
-	STORE
-	LOADi		2
-	qEQL		Y_lo
-	JNZ			DIV_EQL
-	LOADi		0
-	JMP			DIV_FINISH
-	
-DIV_EQL
-	LOADi		1
-	JMP			DIV_FINISH
-	
 DIV_FINISH
-	qADD		Z_lo
-	STORE
-	LOADi		0
-	qADDc		Z_hi
-	STORE
-	LOADm		61
-	LOADp
-	LOADm		62
-	JMP
+	RETURN
+	
+//DIV
+//	LOADi		0
+//	STOREA		Z_hi
+//	STORE		Z_lo
+//	STORE		TEMP_hi
+//	STORE		TEMP_lo
+//	
+//DIV_LOOP
+//	LOADi		0
+//	qEQL		X_th
+//	JZ			SKIP
+//	LOAD		X_hi
+//	qEQL		Y_hi
+//	JNZ			DIV_CHECK_LOW_WORD
+//	qMAG		Y_hi
+//	JMP			DIV_CHECK_HIGH_WORD
+//DIV_CHECK_LOW_WORD
+//	LOAD		X_lo
+//	qMAG		Y_lo
+//DIV_CHECK_HIGH_WORD
+//	JZ			DIV_MAG
+//SKIP
+//	LOAD		X_lo
+//	qSUB		Y_lo
+//	STORE		X_lo
+//	LOAD		X_hi
+//	qSUBc		Y_hi
+//	STORE		X_hi
+//	LOAD		X_th
+//	qSUBc		TEMP_lo
+//	STORE		X_th
+//	
+//	LOADi		1
+//	qADD		Z_lo
+//	STORE
+//	LOADi		0
+//	qADDc		Z_hi
+//	STORE
+//	JMP			DIV_LOOP
+//	
+//DIV_MAG
+//	LOAD		X_lo
+//	qEQL		Y_lo
+//	STORE
+//	LOAD		X_hi
+//	EQL			Y_hi
+//	qADD		Y_lo
+//	STORE
+//	LOADi		2
+//	qEQL		Y_lo
+//	JNZ			DIV_EQL
+//	LOADi		0
+//	JMP			DIV_FINISH
+//	
+//DIV_EQL
+//	LOADi		1
+//	JMP			DIV_FINISH
+//	
+//DIV_FINISH
+//	qADD		Z_lo
+//	STORE
+//	LOADi		0
+//	qADDc		Z_hi
+//	STORE
+//	RETURN
