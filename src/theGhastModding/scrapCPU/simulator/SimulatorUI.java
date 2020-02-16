@@ -98,7 +98,7 @@ public class SimulatorUI extends JPanel implements Runnable {
 	public SimulatorUI(JFrame parrent) {
 		super();
 		
-		Random rng = new Random();
+		/*Random rng = new Random();
 		String s = "";
 		for(int i = 0; i < 4; i++) {
 			s += Long.toString(rng.nextLong(), 32);
@@ -113,7 +113,7 @@ public class SimulatorUI extends JPanel implements Runnable {
 				s2 += Character.toString(c).toLowerCase();
 			}
 		}
-		System.out.println(s2);
+		System.out.println(s2);*/
 		
 		setPreferredSize(new Dimension(1050, 711));
 		setLayout(null);
