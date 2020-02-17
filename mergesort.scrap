@@ -1,0 +1,299 @@
+//Constants
+SYMBOL		LIST_SIZE		20
+SYMBOL		TEMP_LIST_S		35
+
+//Variable addresses
+SYMBOL		SIZE			20
+SYMBOL		C1				21
+SYMBOL		C2				22
+SYMBOL		V_L				23
+SYMBOL		V_M				24
+SYMBOL		V_R				25
+SYMBOL		V_J				26
+SYMBOL		V_K				27
+SYMBOL		V_I				28
+SYMBOL		TEMP			29
+SYMBOL		A_1				30
+SYMBOL		A_2				31
+SYMBOL		V_K2			32
+SYMBOL		V_I2			33
+SYMBOL		V_K3			34
+
+MAIN
+	LOADi		LIST_SIZE
+	STOREA		SIZE
+	//Init list
+	LOADi		6
+	STOREA		0
+	LOADi		24
+	STOREA		1
+	LOADi		52
+	STOREA		2
+	LOADi		6
+	STOREA		3
+	LOADi		2
+	STOREA		4
+	LOADi		31
+	STOREA		5
+	LOADi		48
+	STOREA		6
+	LOADi		58
+	STOREA		7
+	LOADi		14
+	STOREA		8
+	LOADi		57
+	STOREA		9
+	LOADi		62
+	STOREA		10
+	LOADi		53
+	STOREA		11
+	LOADi		43
+	STOREA		12
+	LOADi		41
+	STOREA		13
+	LOADi		51
+	STOREA		14
+	LOADi		62
+	STOREA		15
+	LOADi		11
+	STOREA		16
+	LOADi		49
+	STOREA		17
+	LOADi		33
+	STOREA		18
+	LOADi		36
+	STOREA		19
+	CALL		SORT
+	LOADi		63
+	STOREA		63
+	JMP			HALT
+	
+SORT
+	LOAD		61 // Back-up return address as this function is going to do CALLs itself
+	STOREA		C1
+	LOAD		62
+	STOREA		C2
+	
+	LOADi		2
+	STOREA		V_K2
+	LOADi		1
+	STOREA		V_K3
+LOOP_1
+	LOADi		0
+	STOREA		V_I2
+LOOP_2
+	LOAD		V_I2		// l = i
+	STOREA		V_L
+	LOAD		V_I2		// m = i + k / 2
+	qADD		V_K3
+	STORE		V_M
+	LOAD		V_I2		// min(i + k - 1, A.length - 1)
+	qADD		V_K2
+	STORE		TEMP
+	LOADi		63
+	qADD		TEMP
+	STORE		V_R
+	LOADi		63
+	qADD		SIZE
+	STORE		TEMP
+	LOAD		V_R
+	qMAG		TEMP
+	JZ			MIN
+	
+	LOAD		TEMP
+	STOREA		V_R
+MIN
+	CALL		MERGE
+	
+	LOAD		V_K2		// i += k
+	ADD			V_I2
+	STORE
+	ADD			V_K2		// exit condition
+	qMAG		SIZE
+	JZ			LOOP_2
+	
+	LOAD		V_K2		// k *= 2
+	STOREA		V_K3
+	qADD		V_K2
+	STORE
+	OUT
+	LOADi		LIST_SIZE	// exit condition
+	qMAG		V_K2
+	JNZ			LOOP_1
+	
+	LOADi		0			// merge(0, k / 2, A.length - 1)
+	STOREA		V_L
+	LOAD		V_K3
+	STOREA		V_M
+	LOADi		63
+	qADD		SIZE
+	STORE		V_R
+	CALL		MERGE
+	
+	LOAD		C1 // Restore original return address and RETURN
+	STOREA		61
+	LOAD		C2
+	STOREA		62
+	RETURN
+	
+MERGE
+	LOAD		SIZE			// Check if all parameters are in range
+	qMAG		V_L
+	STORE		TEMP
+	LOAD		SIZE
+	MAG			V_M
+	qADD		TEMP
+	STORE
+	LOAD		SIZE
+	MAG			V_R
+	qADD		TEMP
+	STORE
+	LOADi		3
+	qEQL		TEMP
+	JZ			COPY_LOOP_END	// One of the parameters is invalid: return
+	LOAD		V_L
+	STOREA		V_J
+	LOAD		V_M
+	STOREA		V_K
+	LOADi		63
+	STOREA		V_I
+MERGE_LOOP
+	LOADi		1				// Increment i
+	qADD		V_I
+	STORE
+	
+	LOAD		V_K				// Return if k > r && j >= m
+	qMAG		V_R
+	STORE		TEMP
+	LOAD		V_J
+	MAG			V_M
+	qADD		TEMP
+	STORE
+	LOAD		V_J
+	EQL			V_M
+	qADD		TEMP
+	STORE
+	LOADi		2
+	qEQL		TEMP
+	JNZ			MERGE_END
+	
+	LOADm		V_J				// A_1 = A[j]
+	LOADm
+	LOAD
+	STOREA		A_1
+	
+	LOADm		V_K				// A_2 = A[k]
+	LOADm
+	LOAD
+	STOREA		A_2
+	
+	LOAD		V_K
+	qMAG		V_R
+	JNZ			S1
+	
+	LOAD		V_M				// j < m
+	qMAG		V_J
+	STORE		TEMP
+	
+	LOAD		A_2				// A_1 < A_2
+	MAG			A_1
+	qADD		TEMP
+	STORE
+	
+	LOADi		2
+	qEQL		TEMP
+	JNZ			S1
+	
+	JMP			S2
+S1
+	LOADi		TEMP_LIST_S		// Calculate pointer for temp[i]
+	qADD		V_I
+	STORE		TEMP
+	
+	LOAD		A_1				// temp[i] = A_1
+	LOADm		TEMP
+	LOADm
+	STOREA
+	
+	LOADi		1				// j++
+	qADD		V_J
+	STORE
+	
+	JMP			S4	
+S2
+	LOAD		V_J				// if j >= m
+	qMAG		V_M
+	STORE		TEMP
+	LOAD		V_J
+	EQL			V_M
+	qADD		TEMP
+	JNZ			S3
+	
+	LOAD		V_R				//r >= k && A_1 >= A_2
+	qMAG		V_K
+	STORE		TEMP
+	LOAD		V_R
+	EQL			V_K
+	qADD		TEMP
+	STORE
+	LOAD		A_1
+	MAG			A_2
+	qADD		TEMP
+	STORE
+	LOAD		A_1
+	EQL			A_2
+	qADD		TEMP
+	STORE
+	
+	LOADi		2
+	qEQL		TEMP
+	JNZ			S3
+	
+	JMP			S4
+S3
+	LOADi		TEMP_LIST_S		// Calculate pointer for temp[i]
+	qADD		V_I
+	STORE		TEMP
+	
+	LOAD		A_2				// temp[i] = A_2
+	LOADm		TEMP
+	LOADm
+	STOREA
+	
+	LOADi		1				// k++
+	qADD		V_K
+	STORE
+	
+S4
+	JMP			MERGE_LOOP
+	
+MERGE_END
+	LOAD		V_L
+	STOREA		V_I
+COPY_LOOP
+	LOAD		V_I				// Exit condition
+	qMAG		V_R
+	JNZ			COPY_LOOP_END
+	
+	LOAD		V_I				// A[i] = temp[i - l]
+	qSUB		V_L
+	STORE		TEMP
+	LOADi		TEMP_LIST_S
+	qADD		TEMP
+	STORE
+	LOADm
+	LOAD
+	LOADm		V_I
+	LOADm
+	STOREA
+	
+	LOADi		1				// i++
+	qADD		V_I
+	STORE
+	JMP			COPY_LOOP
+	
+COPY_LOOP_END
+	RETURN
+	
+HALT
+	JMP			HALT
