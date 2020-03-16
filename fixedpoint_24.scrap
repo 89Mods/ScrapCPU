@@ -1,0 +1,396 @@
+MAIN
+	#X = 5.0
+	LOADi		0
+	STOREA		X_lo
+	STORE		X_hi
+	STORE		X_fo
+	STORE		0
+	LOADi		5
+	STOREA		X_th
+	
+	#Y = 7.0
+	LOADi		0
+	STOREA		Y_lo
+	STORE		Y_hi
+	STORE		Y_fo
+	LOADi		7
+	STOREA		Y_th
+	
+	#Z = X * Y
+	CALL		MUL
+	
+	#Y = 9.0
+	LOADi		0
+	STOREA		Y_lo
+	STORE		Y_hi
+	STORE		Y_fo
+	LOADi		9
+	STOREA		Y_th
+	
+	#X = Z
+	LOAD		Z_th
+	STOREA		X_th
+	LOAD		Z_fo
+	STOREA		X_fo
+	LOAD		Z_fv
+	STOREA		X_fv
+	LOAD		Z_sx
+	STOREA		X_sx
+	LOADi		0
+	STOREA		X_lo
+	STORE		X_hi
+	
+	#Z = X / Y
+	CALL		DIV
+	
+	#Add 1.0
+	LOADi		1
+	qADD		Z_th
+	STORE
+	LOADi		0
+	qADDc		Z_fo
+	STORE
+	
+HALT
+	LOADi		0
+	qADD		Z_lo
+	OUT
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	qADD		Z_hi
+	OUT
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	qADD		Z_th
+	OUT
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	qADD		Z_fo
+	OUT
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	LOADi		63
+	STOREA		63
+	JMP		HALT
+
+
+# Pointers to arithmetic function arguments
+
+SYMBOL		C1		30
+SYMBOL		C2		31
+SYMBOL		CNTR2	32
+SYMBOL		CNTR	33
+
+SYMBOL		LSH_V6	34
+SYMBOL		LSH_V5	35
+SYMBOL		LSH_V4	36
+SYMBOL		LSH_V3	37
+SYMBOL		LSH_V2	38
+SYMBOL		LSH_V1	39
+SYMBOL		LSH_BY	40
+
+SYMBOL		X_sx	41
+SYMBOL		X_fv	42
+SYMBOL		X_fo	43
+SYMBOL		X_th	44
+SYMBOL		X_hi	45
+SYMBOL		X_lo	46
+
+SYMBOL		Y_fo	47
+SYMBOL		Y_th	48
+SYMBOL		Y_hi	49
+SYMBOL		Y_lo	50
+
+SYMBOL		Z_sx	51
+SYMBOL		Z_fv	52
+SYMBOL		Z_fo	53
+SYMBOL		Z_th	54
+SYMBOL		Z_hi	55
+SYMBOL		Z_lo	56
+
+SYMBOL		TEMP_fo	57
+SYMBOL		TEMP_th 58
+SYMBOL		TEMP_hi	59
+SYMBOL		TEMP_lo	60
+
+# Multiplication Subroutine
+MUL
+	LOAD		62 // For call-stacking
+	STOREA		C1
+	LOAD		61
+	STOREA		C2
+	
+	LOAD		X_lo
+	STOREA		TEMP_lo
+	LOAD		X_hi
+	STOREA		TEMP_hi
+	LOAD		X_th
+	STOREA		TEMP_th
+	LOAD		X_fo
+	STOREA		TEMP_fo
+	LOADi		0
+	STOREA		CNTR
+	STORE		Z_lo
+	STORE		Z_hi
+	STORE		Z_th
+	STORE		Z_fo
+	STORE		Z_fv
+	STORE		Z_sx
+MUL_LOOP
+	LOADi		24
+	qEQL		CNTR
+	JNZ			MUL_FINISH
+	
+	LOADi		0
+	STOREA		LSH_BY
+	LOADi		32
+	qADD		TEMP_fo
+	LOADi		0
+	qADDc		LSH_BY // Which is now 0
+	JZ			MUL_HAS_NO_CARRY
+	
+	LOAD		Y_lo
+	STOREA		LSH_V1
+	LOAD		Y_hi
+	STOREA		LSH_V2
+	LOAD		Y_th
+	STOREA		LSH_V3
+	LOAD		Y_fo
+	STOREA		LSH_V4
+	LOADi		23
+	qSUB		CNTR
+	STORE		LSH_BY
+	CALL		LEFTSHIFT
+	LOAD		LSH_V1
+	qADD		Z_lo
+	STORE
+	LOAD		LSH_V2
+	qADDc		Z_hi
+	STORE
+	LOAD		LSH_V3
+	qADDc		Z_th
+	STORE
+	LOAD		LSH_V4
+	qADDc		Z_fo
+	STORE
+	LOAD		LSH_V5
+	qADDc		Z_fv
+	STORE
+	LOAD		LSH_V6
+	qADDc		Z_sx
+	STORE
+	
+MUL_HAS_NO_CARRY
+	
+	LOAD		TEMP_lo
+	qADD
+	STORE
+	LOAD		TEMP_hi
+	qADDc
+	STORE
+	LOAD		TEMP_th
+	qADDc
+	STORE
+	LOAD		TEMP_fo
+	qADDc
+	STORE
+	
+	LOADi		1
+	qADD		CNTR
+	STORE
+	
+	JMP			MUL_LOOP
+	
+MUL_FINISH
+	LOAD		C1
+	STOREA		62
+	LOAD		C2
+	STOREA		61
+	RETURN
+
+# Leftshift Sub-subroutine
+
+LEFTSHIFT
+	LOADi		0
+	STOREA		CNTR2
+	STORE		LSH_V5
+	STORE		LSH_V6
+LSH_LOOP
+	LOAD		LSH_BY
+	qEQL		CNTR2
+	JNZ			LSH_END
+	LOAD		LSH_V1
+	qADD
+	STORE
+	LOAD		LSH_V2
+	qADDc
+	STORE
+	LOAD		LSH_V3
+	qADDc
+	STORE
+	LOAD		LSH_V4
+	qADDc
+	STORE
+	LOAD		LSH_V5
+	qADDc
+	STORE
+	LOAD		LSH_V6
+	qADDc
+	STORE
+	LOADi		1
+	qADD		CNTR2
+	STORE
+	JMP			LSH_LOOP
+LSH_END
+	RETURN
+	
+# Division Subroutine
+	
+DIV
+	LOADi		0
+	STOREA		Z_lo
+	STORE		Z_hi
+	STORE		Z_th
+	STORE		Z_fo
+	STORE		TEMP_lo
+	STORE		TEMP_hi
+	STORE		TEMP_th
+	STORE		TEMP_fo
+	STORE		CNTR
+	LOAD		X_lo
+	STOREA		LSH_V1
+	LOAD		X_hi
+	STOREA		LSH_V2
+	LOAD		X_th
+	STOREA		LSH_V3
+	LOAD		X_fo
+	STOREA		LSH_V4
+	LOAD		X_fv
+	STOREA		LSH_V5
+	LOAD		X_sx
+	STOREA		LSH_V6
+DIV_LOOP
+	LOADi		36
+	qEQL		CNTR
+	JNZ			DIV_FINISH
+	
+	LOAD		Z_lo
+	qADD
+	STORE
+	LOAD		Z_hi
+	qADDc
+	STORE
+	LOAD		Z_th
+	qADDc
+	STORE
+	LOAD		Z_fo
+	qADDc
+	STORE
+	
+	LOAD		LSH_V1
+	qADD
+	STORE
+	LOAD		LSH_V2
+	qADDc
+	STORE
+	LOAD		LSH_V3
+	qADDc
+	STORE
+	LOAD		LSH_V4
+	qADDc
+	STORE
+	LOAD		LSH_V5
+	qADDc
+	STORE
+	LOAD		LSH_V6
+	qADDc
+	STORE
+	LOAD		TEMP_lo
+	qADDc
+	STORE
+	LOAD		TEMP_hi
+	qADDc
+	STORE
+	LOAD		TEMP_th
+	qADDc
+	STORE
+	LOAD		TEMP_fo
+	qADDc
+	STORE
+	LOADi		0
+	qADDc		0
+	JNZ			DIV_DO_THE_THING
+	
+	LOAD		Y_fo
+	qEQL		TEMP_fo
+	JZ			DIV_COMPARE_4
+	
+	LOAD		Y_th
+	qEQL		TEMP_th
+	JZ			DIV_COMPARE_3
+	
+	LOAD		Y_hi
+	qEQL		TEMP_hi
+	JZ			DIV_COMPARE_2
+	
+	LOAD		Y_lo
+	qMAG		TEMP_lo
+	JMP			DIV_COMPARED
+	
+DIV_COMPARE_4
+	qMAG		TEMP_fo
+	JMP			DIV_COMPARED
+DIV_COMPARE_3
+	qMAG		TEMP_th
+	JMP			DIV_COMPARED
+DIV_COMPARE_2
+	qMAG		TEMP_hi
+DIV_COMPARED
+	JNZ			DIV_NOT_LARGER_OR_EQUAL
+DIV_DO_THE_THING
+	LOAD		TEMP_lo
+	qSUB		Y_lo
+	STORE		TEMP_lo
+	LOAD		TEMP_hi
+	qSUBc		Y_hi
+	STORE		TEMP_hi
+	LOAD		TEMP_th
+	qSUBc		Y_th
+	STORE		TEMP_th
+	LOAD		TEMP_fo
+	qSUBc		Y_fo
+	STORE		TEMP_fo
+	
+	LOADi		1
+	qADD		Z_lo
+	STORE
+	LOADi		0
+	qADDc		Z_hi
+	STORE
+	qADDc		Z_th
+	STORE
+	qADDc		Z_fo
+	STORE
+	
+DIV_NOT_LARGER_OR_EQUAL
+	
+	LOADi		1
+	qADD		CNTR
+	STORE
+	
+	JMP			DIV_LOOP
+	
+DIV_FINISH
+	RETURN

@@ -1,23 +1,24 @@
 //Constants
 SYMBOL		LIST_SIZE		20
-SYMBOL		TEMP_LIST_S		35
+SYMBOL		TEMP_LIST_S		38
 
 //Variable addresses
-SYMBOL		SIZE			20
-SYMBOL		C1				21
-SYMBOL		C2				22
-SYMBOL		V_L				23
-SYMBOL		V_M				24
-SYMBOL		V_R				25
-SYMBOL		V_J				26
-SYMBOL		V_K				27
-SYMBOL		V_I				28
-SYMBOL		TEMP			29
-SYMBOL		A_1				30
-SYMBOL		A_2				31
-SYMBOL		V_K2			32
-SYMBOL		V_I2			33
-SYMBOL		V_K3			34
+SYMBOL		SIZE			21
+SYMBOL		C1				22
+SYMBOL		C2				23
+SYMBOL		V_L				24
+SYMBOL		V_M				25
+SYMBOL		V_R				26
+SYMBOL		V_J				27
+SYMBOL		V_K				28
+SYMBOL		V_I				29
+SYMBOL		TEMP			30
+SYMBOL		A_1				31
+SYMBOL		A_2				32
+SYMBOL		V_K2			33
+SYMBOL		V_I2			34
+SYMBOL		V_K3			35
+SYMBOL		TEMP2			36
 
 MAIN
 	LOADi		LIST_SIZE
@@ -47,13 +48,13 @@ MAIN
 	STOREA		10
 	LOADi		53
 	STOREA		11
-	LOADi		43
+	LOADi		9
 	STOREA		12
 	LOADi		41
 	STOREA		13
-	LOADi		51
+	LOADi		1
 	STOREA		14
-	LOADi		62
+	LOADi		0
 	STOREA		15
 	LOADi		11
 	STOREA		16
@@ -64,12 +65,36 @@ MAIN
 	LOADi		36
 	STOREA		19
 	CALL		SORT
+	
+	LOADi		0
+	STOREA		V_I
+OUTPUT_LOOP
+	LOADi		63
+	STOREA		63
+	
+	LOADm		V_I
+	LOADm
+	LOAD
+	STOREA		63
+	LOADi		63
+	STOREA		V_J
+DELAY_LOOP
+	qADD		V_J
+	STORE
+	JNZ			DELAY_LOOP
+	
+	LOADi		1
+	ADD			V_I
+	STORE
+	qEQL		SIZE
+	JZ			OUTPUT_LOOP
+	
 	LOADi		63
 	STOREA		63
 	JMP			HALT
 	
 SORT
-	LOAD		61 // Back-up return address as this function is going to do CALLs itself
+	LOAD		61 			// Back-up return address as this function is going to do CALLs itself
 	STOREA		C1
 	LOAD		62
 	STOREA		C2
@@ -93,7 +118,7 @@ LOOP_2
 	LOADi		63
 	qADD		TEMP
 	STORE		V_R
-	LOADi		63
+#	LOADi		63
 	qADD		SIZE
 	STORE		TEMP
 	LOAD		V_R
@@ -187,24 +212,19 @@ MERGE_LOOP
 	LOAD
 	STOREA		A_2
 	
-	LOAD		V_K
-	qMAG		V_R
-	JNZ			S1
-	
 	LOAD		V_M				// j < m
 	qMAG		V_J
-	STORE		TEMP
+	JZ			S3
 	
 	LOAD		A_2				// A_1 < A_2
-	MAG			A_1
-	qADD		TEMP
-	STORE
-	
-	LOADi		2
-	qEQL		TEMP
+	qMAG		A_1
+	STORE		TEMP2
 	JNZ			S1
 	
-	JMP			S2
+	LOAD		V_K
+	qMAG		V_R
+	JZ			S2
+	
 S1
 	LOADi		TEMP_LIST_S		// Calculate pointer for temp[i]
 	qADD		V_I
@@ -220,36 +240,20 @@ S1
 	STORE
 	
 	JMP			S4	
-S2
-	LOAD		V_J				// if j >= m
-	qMAG		V_M
-	STORE		TEMP
-	LOAD		V_J
-	EQL			V_M
-	qADD		TEMP
-	JNZ			S3
-	
+S2	
 	LOAD		V_R				//r >= k && A_1 >= A_2
 	qMAG		V_K
 	STORE		TEMP
 	LOAD		V_R
 	EQL			V_K
-	qADD		TEMP
-	STORE
-	LOAD		A_1
-	MAG			A_2
-	qADD		TEMP
-	STORE
-	LOAD		A_1
-	EQL			A_2
-	qADD		TEMP
+	ADD			TEMP
+	qSUB		TEMP2
 	STORE
 	
-	LOADi		2
-	qEQL		TEMP
-	JNZ			S3
+	LOADi		1
+	qEQL		TEMP2
+	JZ			S4
 	
-	JMP			S4
 S3
 	LOADi		TEMP_LIST_S		// Calculate pointer for temp[i]
 	qADD		V_I
