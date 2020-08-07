@@ -18,28 +18,28 @@ public class Assembler {
 	
 	static {
 		opcodes.add(new Instruction("NOP", 0x00, false, true));
-		opcodes.add(new Instruction("LOAD", 0x01, true, true));
-		opcodes.add(new Instruction("STORE", 0x02, true, true));
-		opcodes.add(new Instruction("STOREA", 0x03, true, true));
+		opcodes.add(new Instruction(new String[] {"LOAD", "LDA"}, 0x01, true, true));
+		opcodes.add(new Instruction(new String[] {"STORE", "STB"}, 0x02, true, true));
+		opcodes.add(new Instruction(new String[] {"STOREA", "STA"}, 0x03, true, true));
 		opcodes.add(new Instruction("ADD", 0x04, true, true));
-		opcodes.add(new Instruction("ADDc", 0x05, true, true));
+		opcodes.add(new Instruction(new String[] {"ADDc", "ADC"}, 0x05, true, true));
 		opcodes.add(new Instruction("SUB", 0x06, true, true));
-		opcodes.add(new Instruction("SUBc", 0x07, true, true));
+		opcodes.add(new Instruction(new String[] {"SUBc", "SUC"}, 0x07, true, true));
 		opcodes.add(new Instruction("EQL", 0x08, true, true));
 		opcodes.add(new Instruction("MAG", 0x09, true, true));
-		opcodes.add(new Instruction("LSH", 0x0A, true, true));
-		opcodes.add(new Instruction("RSH", 0x0B, true, true));
+		//opcodes.add(new Instruction("LSH", 0x0A, true, true));
+		//opcodes.add(new Instruction("RSH", 0x0B, true, true));
 		opcodes.add(new Instruction("JMP", 0x0C, true, true));
 		opcodes.add(new Instruction("JZ", 0x0D, true, true));
 		opcodes.add(new Instruction("JNZ", 0x0E, true, true));
-		opcodes.add(new Instruction("LOADm", 0x0F, true, true));
-		opcodes.add(new Instruction("LOADp", 0b010000, true, true));
-		opcodes.add(new Instruction("LOADi", 0x3F, true, false));
+		opcodes.add(new Instruction(new String[] {"LOADm", "LDM"}, 0x0F, true, true));
+		opcodes.add(new Instruction(new String[] {"LOADp", "LDP"}, 0b010000, true, true));
+		opcodes.add(new Instruction(new String[] {"LOADi", "LDI"}, 0x3F, true, false));
 		
 		opcodes.add(new Instruction("qADD", 0x04 | (1 << 4), true, true));
-		opcodes.add(new Instruction("qADDc", 0x05 | (1 << 4), true, true));
+		opcodes.add(new Instruction(new String[] {"qADDc", "qADC"}, 0x05 | (1 << 4), true, true));
 		opcodes.add(new Instruction("qSUB", 0x06 | (1 << 4), true, true));
-		opcodes.add(new Instruction("qSUBc", 0x07 | (1 << 4), true, true));
+		opcodes.add(new Instruction(new String[] {"qSUBc", "qSUC"}, 0x07 | (1 << 4), true, true));
 		opcodes.add(new Instruction("qEQL", 0x08 | (1 << 4), true, true));
 		opcodes.add(new Instruction("qMAG", 0x09 | (1 << 4), true, true));
 		opcodes.add(new Instruction("qLSH", 0x0A | (1 << 4), true, true));
@@ -48,17 +48,28 @@ public class Assembler {
 	
 	private static class Instruction {
 		
-		public String name;
+		public String[] mnemonics;
 		public int opcode;
 		public boolean hasArgument;
 		public boolean hasIndirectMode;
 		
-		public Instruction(String name, int opcode, boolean hasArgument, boolean hasIndirectMode) {
+		public Instruction(String mnemonic, int opcode, boolean hasArgument, boolean hasIndirectMode) {
+			this(new String[] {mnemonic}, opcode, hasArgument, hasIndirectMode);
+		}
+		
+		public Instruction(String[] mnemonics, int opcode, boolean hasArgument, boolean hasIndirectMode) {
 			super();
-			this.name = name;
+			this.mnemonics = mnemonics;
 			this.opcode = opcode;
 			this.hasArgument = hasArgument;
 			this.hasIndirectMode = hasIndirectMode;
+		}
+		
+		public boolean checkMnemonic(String s) {
+			for(String s2:mnemonics) {
+				if(s2.equalsIgnoreCase(s)) return true;
+			}
+			return false;
 		}
 		
 	}
@@ -319,7 +330,7 @@ public class Assembler {
 				
 				Instruction ins = null;
 				for(Instruction in:opcodes) {
-					if(line.split("[ \t]")[0].equals(in.name)) {
+					if(in.checkMnemonic(line.split("[ \t]")[0])) {
 						ins = in;
 						break;
 					}
@@ -329,7 +340,7 @@ public class Assembler {
 					System.exit(1);
 				}
 				instructionAddr[i] = addrCntr;
-				if(ins.name.equals("JMP") || ins.name.equals("JZ") || ins.name.equals("JNZ")) {
+				if(ins.mnemonics[0].equals("JMP") || ins.mnemonics[0].equals("JZ") || ins.mnemonics[0].equals("JNZ")) {
 					String[] instr_args = line.split("[ \t]");
 					int indx = getNextArgument(instr_args, 0);
 					if(indx == -1) {
@@ -341,7 +352,7 @@ public class Assembler {
 						addrCntr += 4;
 					}
 				}
-				else if(ins.name.equals("NOP")) {
+				else if(ins.mnemonics[0].equals("NOP")) {
 					addrCntr += 2;
 				}
 				else if(ins.hasArgument) {
@@ -432,7 +443,7 @@ public class Assembler {
 				String line = unwrapped.get(i);
 				Instruction ins = null;
 				for(Instruction in:opcodes) {
-					if(line.split("[ \t]")[0].equals(in.name)) {
+					if(in.checkMnemonic(line.split("[ \t]")[0])) {
 						ins = in;
 						break;
 					}
@@ -475,7 +486,7 @@ public class Assembler {
 						bytecode[bytecodeSize] = (byte)(argnum & 0b00111111);
 						bytecodeSize++;
 					}
-				}else if(ins.name.equals("NOP")) {
+				}else if(ins.mnemonics[0].equals("NOP")) {
 					bytecode[bytecodeSize] = 0;
 					bytecodeSize++;
 				}/* else {

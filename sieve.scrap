@@ -9,43 +9,43 @@ SYMBOL		TEMP			37
 SYMBOL		ZERO			38
 
 MAIN
-	LOADi		0
-	STOREA		V_I
-	STORE		ZERO
+	LDI			0
+	STA			V_I
+	STB			ZERO
 FILL_LOOP
-	LOADi		0
-	LOADm		V_I
-	LOADm
-	STOREA
-	LOADi		1
+	LDI			0
+	LDM			V_I
+	LDM
+	STA
+	LDI			1
 	qADD		V_I
-	STORE
-	LOADi		SIEVE_WORDS
+	STB
+	LDI			SIEVE_WORDS
 	qEQL		V_I
 	JZ			FILL_LOOP
 	
-	LOADi		3
-	STOREA		V_I
-	LOADi		0
-	STOREA		V_I2
+	LDI			3
+	STA			V_I
+	LDI			0
+	STA			V_I2
 SIEVE_LOOP
 	CALL		IS_IN_SIVE
-	LOADi		0
+	LDI			0
 	qEQL		RET
 	JZ			NOT_PRIME
 	
-	LOAD		V_I
-	STOREA		63
+	LDA			V_I
+	STA			63
 	CALL		MARK_MULTIPLES
 	
 NOT_PRIME
-	LOADi		2
+	LDI			2
 	qADD		V_I
-	STORE
-	LOADi		1
+	STB
+	LDI			1
 	qADD		V_I2
-	STORE
-	LOADi		SIEVE_SIZE
+	STB
+	LDI			SIEVE_SIZE
 	qMAG		V_I
 	JNZ			SIEVE_LOOP
 	
@@ -63,28 +63,28 @@ HALT
 	JMP			HALT
 	
 IS_IN_SIVE
-	LOADm		V_I2
-	LOADm
-	LOAD
-	STOREA		RET
+	LDM			V_I2
+	LDM
+	LDA
+	STA			RET
 	RETURN
 	
 MARK_MULTIPLES
-	LOAD		V_I2
-	STOREA		TEMP
+	LDA			V_I2
+	STA			TEMP
 MARK_LOOP
-	LOADi		1				// sieve[i] = 1
-	LOADm		TEMP
-	LOADm
-	STOREA
+	LDI			1				// sieve[i] = 1
+	LDM			TEMP
+	LDM
+	STA
 	
-	LOAD		V_I
+	LDA			V_I
 	qADD		TEMP
-	STORE
-	LOADi		0				// Integer overflow exit condition
-	qADDc		ZERO
+	STB
+	LDI			0				// Integer overflow exit condition
+	qADC		ZERO
 	JNZ			MARK_LOOP_END
-	LOADi		SIEVE_WORDS		// i > size size exit condition
+	LDI			SIEVE_WORDS		// i > size size exit condition
 	qMAG		TEMP
 	JNZ			MARK_LOOP
 
