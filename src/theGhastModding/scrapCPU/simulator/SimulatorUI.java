@@ -31,8 +31,9 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.exbin.bined.swing.CodeArea;
-import org.exbin.utils.binary_data.ByteArrayEditableData;
+import org.exbin.auxiliary.paged_data.ByteArrayEditableData;
+import org.exbin.bined.swing.basic.CodeArea;
+
 import javax.swing.JCheckBox;
 
 public class SimulatorUI extends JPanel implements Runnable {
